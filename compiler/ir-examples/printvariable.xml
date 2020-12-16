@@ -1,0 +1,40 @@
+<Program xmlns="http://sp.informatik.uni-ulm.de/schema/AST.xsd">
+  <Procedure>
+    <Name>main</Name>
+    <StatementElement>
+      <Block>
+        <StatementElement Line="1">
+          <Definition>
+            <Name>y</Name>
+            <TypeElement>
+              <Primitive>uint8</Primitive>
+            </TypeElement>
+            <ExpressionElement>
+              <IntegerLiteral>
+                <Value>6</Value>
+                <Primitive>uint8</Primitive>
+              </IntegerLiteral>
+            </ExpressionElement>
+          </Definition>
+        </StatementElement>
+        <StatementElement>
+          <ExpressionElement>
+            <Call>
+              <Name>print</Name>
+              <ExpressionElement id="2596">
+                <Place>
+                  <Variable>
+                    <Name>y</Name>
+                  </Variable>
+                </Place>
+              </ExpressionElement>
+            </Call>
+          </ExpressionElement>
+        </StatementElement>
+      </Block>
+    </StatementElement>
+    <TypeElement>
+      <Primitive>void</Primitive>
+    </TypeElement>
+  </Procedure>
+</Program>

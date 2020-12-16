@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://sp.informatik.uni-ulm.de/schema/AST.xsd"
+	targetNamespace="http://sp.informatik.uni-ulm.de/schema/AST.xsd"
+	elementFormDefault="qualified">
+	<element name="Program">
+		<complexType>
+			<sequence>
+				<choice maxOccurs="unbounded" minOccurs="0">
+					<element name="Definition" type="tns:Definition" />
+					<element name="Procedure" type="tns:Procedure" />
+					<element name="Include" type="tns:Include" />
+				</choice>
+			</sequence>
+			<attribute name="Meta" type="string" />
+		</complexType>
+	</element>
+	
+	<element name="ExpressionElement" type="tns:ExpressionElement" />
+	<element name="StatementElement" type="tns:StatementElement" />
+	<element name="TypeElement" type="tns:TypeElement" />
+
+	<complexType name="Include">
+		<attribute name="Path" use="required" type="string" />
+	</complexType>
+
+	<complexType name="Procedure">
+		<sequence>
+			<element name="Name" type="string" />
+			<element ref="tns:StatementElement" maxOccurs="1" minOccurs="0" />
+			<element ref="tns:TypeElement" />
+			<element name="ParameterTypes" maxOccurs="unbounded" minOccurs="0">
+				<complexType>
+					<sequence>
+						<element name="Name" type="string" />
+						<element ref="tns:TypeElement" />
+					</sequence>
+				</complexType>
+			</element>
+		</sequence>
+		<attribute name="Line" type="int" />
+	</complexType>
+	
+	<complexType name="TypeElement">
+		<choice>
+			<element name="Primitive" type="tns:PrimitiveType" />
+			<element name="ArrayType" type="tns:ArrayType" />
+			<element name="StructType" type="tns:StructType" />
+		</choice>
+	</complexType>
+	
+	<complexType name="StatementElement">
+		<choice>
+			<element name="Block" type="tns:Block" />
+			<element name="Return" type="tns:Return" />
+			<element name="While" type="tns:While" />
+			<element name="DoWhile" type="tns:DoWhile" />
+			<element name="If" type="tns:If" />
+			<element name="Switch" type="tns:Switch" />
+			<element ref="tns:ExpressionElement" />
+			<element ref="tns:Definition" />
+			<element name="Break" type="tns:Break" />
+			<element name="Continue" type="tns:Continue" />
+		</choice>
+		<attribute name="Line" type="int" />
+	</complexType>
+	
+	<element name="Definition" type="tns:Definition" />
+	<complexType name="Definition">
+		<complexContent>
+			<extension base="tns:Statement">
+				<sequence>
+					<element name="Name" type="string" />
+					<element ref="tns:TypeElement" />
+					<element ref="tns:ExpressionElement" maxOccurs="1" minOccurs="0" />
+				</sequence>
+				<attribute name="Line" type="int" />
+				<attribute name="Static" type="boolean" />
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="ExpressionElement">
+		<complexContent>
+			<extension base="tns:Statement">
+				<sequence>
+					<choice>
+						<element name="Binary" type="tns:Binary" />
+						<element name="Call" type="tns:Call" />
+						<element name="Assignment" type="tns:Assignment" />
+						<element ref="tns:Place" />
+						<element ref="tns:IntegerLiteral" />
+						<element name="ArrayLiteral" type="tns:ArrayLiteral" />
+						<element name="StructLiteral" type="tns:StructLiteral" />
+						<element name="Cast" type="tns:Cast" />
+					</choice>
+					<element ref="tns:TypeElement" maxOccurs="1" minOccurs="0" />
+				</sequence>
+				<attribute name="id" type="int" />
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<element name="Place" type="tns:Place" />
+	<complexType name="Place">
+		<complexContent>
+			<extension base="tns:Expression">
+				<choice>
+					<element name="Variable" type="tns:Variable" />
+					<element name="ArrayAccess" type="tns:ArrayAccess" />
+					<element name="StructAccess" type="tns:StructAccess" />
+				</choice>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<simpleType name="PrimitiveType">
+		<restriction base="string">
+			<enumeration value="int8" />
+			<enumeration value="int16" />
+			<enumeration value="bcd" />
+			<enumeration value="void" />
+			<enumeration value="bool" />
+			<whiteSpace value="collapse" />
+			<enumeration value="any" />
+			<enumeration value="uint8" />
+			<enumeration value="uint16" />
+			<enumeration value="fixed" />
+		</restriction>
+	</simpleType>
+	
+	<element name="IntegerLiteral" type="tns:IntegerLiteral" />
+	<complexType name="IntegerLiteral">
+		<complexContent>
+			<extension base="tns:Expression">
+				<sequence>
+					<element name="Value" type="integer" />
+					<element name="Primitive" type="tns:PrimitiveType" maxOccurs="1" minOccurs="0" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="ArrayLiteral">
+		<complexContent>
+			<extension base="tns:Expression">
+				<sequence>
+					<element ref="tns:ExpressionElement" maxOccurs="unbounded" minOccurs="1" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="StructLiteral">
+		<complexContent>
+			<extension base="tns:Expression">
+				<sequence>
+					<element name="Field" maxOccurs="unbounded" minOccurs="1">
+						<complexType>
+							<sequence>
+								<element name="Name" type="string" />
+								<element ref="tns:ExpressionElement" />
+							</sequence>
+						</complexType>
+					</element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<simpleType name="OperatorType">
+		<restriction base="string">
+			<enumeration value="add" />
+			<enumeration value="sub" />
+			<enumeration value="mul" />
+			<enumeration value="div" />
+			<enumeration value="mod" />
+			<enumeration value="and" />
+			<enumeration value="or" />
+			<enumeration value="xor" />
+			<enumeration value="eq" />
+			<enumeration value="neq" />
+			<enumeration value="lt" />
+			<enumeration value="gt" />
+			<enumeration value="leq" />
+			<enumeration value="geq" />
+			<enumeration value="shl" />
+			<enumeration value="shr" />
+		</restriction>
+	</simpleType>
+	
+	<complexType name="Expression" />
+	
+	<complexType name="Binary">
+		<complexContent>
+			<extension base="tns:Expression">
+				<sequence>
+					<element name="Operator" type="tns:OperatorType" />
+					<element name="Left">
+						<complexType>
+							<sequence>
+								<element ref="tns:ExpressionElement" />
+							</sequence>
+						</complexType>
+					</element>
+					<element name="Right">
+						<complexType>
+							<sequence>
+								<element ref="tns:ExpressionElement" />
+							</sequence>
+						</complexType>
+					</element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="Call">
+		<complexContent>
+			<extension base="tns:Expression">
+				<sequence>
+					<element name="Name" type="string" />
+					<element minOccurs="0" maxOccurs="unbounded" ref="tns:ExpressionElement" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="Assignment">
+		<complexContent>
+			<extension base="tns:Expression">
+				<sequence>
+					<element ref="tns:Place" />
+					<element ref="tns:ExpressionElement" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="Statement" />
+	
+	<complexType name="Block">
+		<complexContent>
+			<extension base="tns:Statement">
+				<sequence>
+					<element minOccurs="0" maxOccurs="unbounded" ref="tns:StatementElement" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="Return">
+		<complexContent>
+			<extension base="tns:Statement">
+				<sequence>
+					<element ref="tns:ExpressionElement" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="While">
+		<complexContent>
+			<extension base="tns:Statement">
+				<sequence>
+					<element ref="tns:ExpressionElement" />
+					<element ref="tns:StatementElement" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="DoWhile">
+		<complexContent>
+			<extension base="tns:Statement">
+				<sequence>
+					<element ref="tns:StatementElement" />
+					<element ref="tns:ExpressionElement" />
+				</sequence>
+				<attribute name="Label" type="string" />
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="If">
+		<complexContent>
+			<extension base="tns:Statement">
+				<sequence>
+					<element ref="tns:ExpressionElement" />
+					<element name="Then">
+						<complexType>
+							<sequence>
+								<element ref="tns:StatementElement" />
+							</sequence>
+						</complexType>
+					</element>
+					<element minOccurs="0" maxOccurs="1" name="Else">
+						<complexType>
+							<sequence>
+								<element ref="tns:StatementElement" />
+							</sequence>
+						</complexType>
+					</element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="Switch">
+		<complexContent>
+			<extension base="tns:Statement">
+				<sequence>
+					<element ref="tns:ExpressionElement" />
+					<element minOccurs="1" maxOccurs="unbounded" name="Case">
+						<complexType>
+							<sequence>
+								<element ref="tns:IntegerLiteral" />
+								<element ref="tns:StatementElement" />
+							</sequence>
+						</complexType>
+					</element>
+					<element minOccurs="0" maxOccurs="1" name="Default">
+						<complexType>
+							<sequence>
+								<element ref="tns:StatementElement" />
+							</sequence>
+						</complexType>
+					</element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="Variable">
+		<complexContent>
+			<extension base="tns:Expression">
+				<sequence>
+					<element name="Name" type="string" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="Type" />
+	
+	<complexType name="ArrayType">
+		<complexContent>
+			<extension base="tns:Type">
+				<sequence>
+					<element ref="tns:TypeElement" />
+					<element ref="tns:IntegerLiteral" maxOccurs="1" minOccurs="0" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+
+	<complexType name="ArrayAccess">
+		<complexContent>
+			<extension base="tns:Expression">
+				<sequence>
+					<element ref="tns:Place" />
+					<element ref="tns:ExpressionElement" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="StructType">
+		<complexContent>
+			<extension base="tns:Type">
+				<sequence>
+					<element minOccurs="1" maxOccurs="unbounded" name="Field">
+						<complexType>
+							<sequence>
+								<element name="Name" type="string" />
+								<element ref="tns:TypeElement" />
+							</sequence>
+						</complexType>
+					</element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="StructAccess">
+		<complexContent>
+			<extension base="tns:Expression">
+				<sequence>
+					<element ref="tns:Place" />
+					<element name="Name" type="string" />
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="Break">
+		<complexContent>
+			<extension base="tns:Statement">
+				<attribute name="Label" type="string" />
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="Continue">
+		<complexContent>
+			<extension base="tns:Statement" />
+		</complexContent>
+	</complexType>
+
+	<complexType name="Cast">
+		<sequence>
+			<element ref="tns:ExpressionElement" />
+			<element ref="tns:TypeElement" />
+		</sequence>
+	</complexType>
+</schema>

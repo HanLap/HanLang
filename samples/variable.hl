@@ -1,0 +1,25 @@
+
+
+
+x <- 5
+y <- 6
+z <- 7
+
+x -> printByte
+y -> printByte
+z -> printByte
+
+x <- 11
+x -> printByte
+
+
+i <- (2 8 -> myAdd)
+i -> printByte
+
+
+j <- ((x myAdd y) myAdd z)
+j -> printByte
+
+
+((1 (3 4 -> myAdd) -> myAdd) (1 1 -> myAdd) -> myAdd) -> printByte
+

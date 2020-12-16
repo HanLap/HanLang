@@ -1,0 +1,12 @@
+; this file was created with wlalink by ville helin <vhelin@iki.fi>.
+; no$gmb symbolic information for "main.gb".
+00:c000 oam
+00:03ea initGB
+00:0454 _defaultPalette
+00:002c oamDMA
+00:0036 endOamDMA
+00:045c turnScreenOff
+00:047a setTile
+00:0001 clearTilemap
+00:0061 loadPalettes
+00:0150 main

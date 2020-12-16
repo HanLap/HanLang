@@ -1,0 +1,122 @@
+GMB 8bit-Loadcommands
+
+  ld   r,r       1      4  --  r=r
+  ld   r,n       2      8  --  r=n
+  ld   r,(HL)    1      8  --  r=(HL)
+  ld   (HL),r    1      8  --  (HL)=r
+  ld   (HL),n    2     12  --  (HL)=n
+  ld   A,(BC)    1      8  --  A=(BC)
+  ld   A,(DE)    1      8  --  A=(DE)
+  ld   A,(nn)    3     16  --  A=(nn)
+  ld   (BC),A    1      8  --  (BC)=A
+  ld   (DE),A    1      8  --  (DE)=A
+  ld   (nn),A    3     16  --  (nn)=A
+  ldi  (HL),A    1      8  --  (HL)=A, HL=HL+1
+  ldi  A,(HL)    1      8  --  A=(HL), HL=HL+1
+  ldd  (HL),A    1      8  --  (HL)=A, HL=HL-1
+  ldd  A,(HL)    1      8  --  A=(HL), HL=HL-1
+
+
+GMB 16bit-Loadcommands
+
+  ld   rr,nn     3     12  --  rr=nn
+  ld   SP,HL     1      8  --  SP=HL
+  push rr        1     16  --  SP=SP-2, (SP)=rr
+  pop  rr        1     12  zc  rr=(SP), SP=SP+2
+
+
+GMB 8bit-Arithmetic/logical Commands
+
+  add  r         1      4  zc  A=A+r
+  add  n         2      8  zc  A=A+n
+  add  (HL)      1      8  zc  A=A+(HL)
+  adc  r         1      4  zc  A=A+r+cy
+  adc  n         2      8  zc  A=A+n+cy
+  adc  (HL)      1      8  zc  A=A+(HL)+cy
+  sub  r         1      4  zc  A=A-r
+  sub  n         2      8  zc  A=A-n
+  sub  (HL)      1      8  zc  A=A-(HL)
+  sbc  r         1      4  zc  A=A-r-cy
+  sbc  n         2      8  zc  A=A-n-cy
+  sbc  (HL)      1      8  zc  A=A-(HL)-cy
+  and  r         1      4  z0  A=A & r
+  and  n         2      8  z0  A=A & n
+  and  (HL)      1      8  z0  A=A & (HL)
+  xor  r         1      4  z0  A=A ^ r
+  xor  n         2      8  z0  A=A ^ n
+  xor  (HL)      1      8  z0  A=A ^ (HL)
+  or   r         1      4  z0  A=A | r
+  or   n         2      8  z0  A=A | n
+  or   (HL)      1      8  z0  A=A | (HL)
+  cp   r         1      4  zc  compare A-r
+  cp   n         2      8  zc  compare A-n
+  cp   (HL)      1      8  zc  compare A-(HL)
+  inc  r         1      4  z-  r=r+1
+  inc  (HL)      1     12  z-  (HL)=(HL)+1
+  dec  r         1      4  z-  r=r-1
+  dec  (HL)      1     12  z-  (HL)=(HL)-1
+  daa            1      4  zc  decimal adjust akku
+  cpl            1      4  --  A = A xor FF
+
+
+GMB 16bit-Arithmetic/logical Commands
+
+  add  HL,rr     1      8  -c  HL = HL+rr
+  inc  rr        1      8  --  rr = rr+1
+  dec  rr        1      8  --  rr = rr-1
+  add  SP,d      2     16  0c  SP = SP+d
+  ld   HL,SP+d   2     12  0c  HL = SP+d
+
+
+GMB Rotate- und Shift-Commands
+
+  rlca           1      4  0c  rotate akku left
+  rla            1      4  0c  rotate akku left through carry
+  rrca           1      4  0c  rotate akku right
+  rra            1      4  0c  rotate akku right through carry
+  rlc  r         2      8  zc  rotate left
+  rlc  (HL)      2     16  zc  rotate left
+  rl   r         2      8  zc  rotate left through carry
+  rl   (HL)      2     16  zc  rotate left through carry
+  rrc  r         2      8  zc  rotate right
+  rrc  (HL)      2     16  zc  rotate right
+  rr   r         2      8  zc  rotate right through carry
+  rr   (HL)      2     16  zc  rotate right through carry
+  sla  r         2      8  zc  shift left arithmetic (b0=0)
+  sla  (HL)      2     16  zc  shift left arithmetic (b0=0)
+  swap r         2      8  z0  exchange low/hi-nibble
+  swap (HL)      2     16  z0  exchange low/hi-nibble
+  sra  r         2      8  zc  shift right arithmetic (b7=b7)
+  sra  (HL)      2     16  zc  shift right arithmetic (b7=b7)
+  srl  r         2      8  zc  shift right logical (b7=0)
+  srl  (HL)      2     16  zc  shift right logical (b7=0)
+
+
+GMB Singlebit Operation Commands
+
+  bit  n,r       2      8  z-  test  bit n
+  bit  n,(HL)    2     12  z-  test  bit n
+  set  n,r       2      8  --  set   bit n
+  set  n,(HL)    2     16  --  set   bit n
+  res  n,r       2      8  --  reset bit n
+  res  n,(HL)    2     16  --  reset bit n
+
+
+GMB CPU-Controlcommands
+
+  ccf            1      4  -c  carry=!carry
+  scf            1      4  -1  carry=1
+  nop            1      4  --  no operation
+
+
+GMB Jumpcommands
+
+  jp   nn        3     16  --  jump to nn (PC=nn)
+  jp   HL        1      4  --  jump to HL (PC=HL)
+  jp   cc,nn     3  16;12  --  conditional jump if nz,z,nc,c
+  jr   PC+d      2     12  --  relative jump by d (PC=PC+d)
+  jr   cc,PC+d   2   12;8  --  conditional relative jump if nz,z,nc,c
+  call nn        3     24  --  call to nn (SP=SP-2, (SP)=PC, PC=nn)
+  call cc,nn     3  24;12  --  conditional call if nz,z,nc,c
+  ret            1     16  --  return (PC=(SP), SP=SP+2)
+  ret  cc        1   20;8  --  conditional return if nz,z,nc,c

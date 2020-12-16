@@ -1,0 +1,27 @@
+<Program xmlns="http://sp.informatik.uni-ulm.de/schema/AST.xsd">
+  <Procedure>
+    <Name>main</Name>
+    <StatementElement>
+      <Block>
+        <StatementElement>
+          <ExpressionElement>
+            <Call>
+              <Name>setTile</Name>
+              <ExpressionElement><IntegerLiteral><Value>1</Value></IntegerLiteral></ExpressionElement>
+              <ExpressionElement><IntegerLiteral><Value>8</Value></IntegerLiteral></ExpressionElement>
+              <ExpressionElement><IntegerLiteral><Value>1</Value></IntegerLiteral></ExpressionElement>
+            </Call>
+          </ExpressionElement>
+        </StatementElement>
+        <StatementElement>
+          <ExpressionElement>
+            <Call>
+            <Name>waitVBlank</Name>
+            </Call>
+          </ExpressionElement>
+        </StatementElement>
+      </Block>
+    </StatementElement>
+    <TypeElement><Primitive>void</Primitive></TypeElement>
+	</Procedure>
+</Program>

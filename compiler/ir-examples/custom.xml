@@ -1,0 +1,26 @@
+<Program xmlns="http://sp.informatik.uni-ulm.de/schema/AST.xsd">
+  <Procedure>
+    <Name>main</Name>
+    <StatementElement>
+      <Block>
+        <StatementElement>
+          <ExpressionElement>
+            <Call>
+              <Name>print</Name>
+              <ExpressionElement>
+                <IntegerLiteral>
+                  <Value>
+                  8
+                  </Value>
+                </IntegerLiteral>
+              </ExpressionElement>
+            </Call>
+          </ExpressionElement>
+        </StatementElement>
+      </Block>
+    </StatementElement>
+    <TypeElement>
+      <Primitive>void</Primitive>
+    </TypeElement>
+  </Procedure>
+</Program>

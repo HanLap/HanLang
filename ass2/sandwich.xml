@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Sandwich>
+    <Bread>
+        <Toasted>true</Toasted>
+        <Type>Wheat</Type>
+    </Bread>
+<Ingredients>
+    <Ingredient>
+        <Name>Salami</Name>
+        <Price>1.89</Price>
+    </Ingredient>
+    <Ingredient>
+        <Name>Cucumber</Name>
+        <Price>0.59</Price>
+    </Ingredient>
+    <Ingredient>
+        <Name>Cheese</Name>
+        <Price>1.29</Price>
+    </Ingredient>
+</Ingredients>
+</Sandwich>

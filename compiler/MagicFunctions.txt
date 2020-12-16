@@ -1,0 +1,277 @@
+======= CALLING CONVENTION =======
+Arguments must be passed via registers in the following order:
+8-bit arguments: A, C, B, E, D, L, H
+16-bit arguments: HL, DE, BC
+
+The result of a procedure can be found in the following register:
+8-bit result: A
+16-bit result: HL
+
+The contents of register A and all registers passed as arguments might get destroyed by the procedure being called.
+All other registers are guaranteed to be the same after the call.
+
+============ GRAPHICS ============
+void waitVBlank()
+	Wait for VBlank. VBlank happens at 60Hz so this can be used for timing your game events.
+	Interpreter Note: On the interpreter this procedure must be called to trigger the rendering process.
+
+void setSpritePosition(uint8 sprite, uint8 x, uint8 y)
+	Sets the ('x', 'y') coordinates for the sprite indexed by 'sprite'.
+	The coordinates refer to the bottom right corner of a tall sprite (a sprite with 16 pixels height).
+
+void setSpriteY(uint8 sprite, uint8 y)
+	Sets the 'y' coordinate for the sprite indexed by 'sprite'.
+	The coordinate refers to the bottom edge of a tall sprite (a sprite with 16 pixels height).
+
+void setSpriteX(uint8 sprite, uint8 x)
+	Sets the 'x' coordinate for the sprite indexed by 'sprite'.
+	The coordinate refers to the right edge of a sprite.
+
+void setSpriteAttributes(uint8 sprite, uint8 tile, uint8 flags)
+	Sets the tile and the flags for the sprite indexed by 'sprite'.
+	'tile' is the index of the tile to use for this sprite.
+	Sprites and the background use the same set of tiles.
+
+void setSpriteTile(uint8 sprite, uint8 tile)
+	Sets the tile for the sprite indexed by 'sprite'.
+	'tile' is the index of the tile to use for this sprite.
+	Sprites and the background use the same set of tiles.
+
+void setSpriteFlags(uint8 sprite, uint8 flags)
+	Sets the flags for the sprite indexed by 'sprite'.
+	The value is made up as follows:
+	Bit 7 - Render sprites behind background colors greater than 0
+	Bit 6 - Flip vertically
+	Bit 5 - Flip horizontally
+	Bit 4 - Unused
+	Bit 3 - Always set this to 0
+	Bit 2 - 0 - Palette
+
+void updateOAM()
+	Loads the sprite data into the object attribute memory. This needs to be called to actually update the sprites on screen.
+
+void enableSprites()
+	Enables sprites on screen. The BIOS of the gameboy leaves them disabled.
+	If you want to use sprites you need to enable them first.
+
+void disableSprites()
+	Disables sprites on screen.
+
+void enableTallSprites()
+	Enables tall sprites. When tall sprites are enabled every sprite is made up of 2 tiles.
+	For this the tiles get treated as pairs, i.e., a tile and its successor are treated as a single tall tile with 16 pixels height.
+	With this option enabled it doesn't matter which tile of a pair is chosen, i.e., the least significant bit is ignored.
+
+void disableTallSprites()
+	Disables tall sprites.
+
+void enableWindow()
+	Enables window display. The window is an additional background layer that is drawn on top of the background but still below sprites.
+	It is unaffected by scroll. Its top left coordinate is set via setWindowX and setWindowY.
+
+void disableWindow()
+	Disables window display.
+
+void turnScreenOn()
+	Turns the screen on. The BIOS of the gameboy leaves the screen on.
+	You only need to turn the screen on if you previously turned it off.
+
+void turnScreenOff()
+	Turns the screen off.
+
+void setTiles(uint8[] tiles, uint8 numTiles, uint8 x, uint8 y)
+	Sets 'numTiles' background tiles at the tilemap position specified by ('x', 'y') to the tiles specified by 'tiles'.
+	'tiles' is an array of indexes of tiles to use for the background at the specified position.
+	The background and sprites use the same set of tiles.
+
+void setTile(uint8 tile, uint8 x, uint8 y)
+	Sets the background tile at the tilemap position specified by ('x', 'y') to 'tile'.
+	'tile' is the index of the tile to use for the background at the specified position.
+	The background and sprites use the same set of tiles.
+
+void setWindowTile(uint8 tile, uint8 x, uint8 y)
+	Sets the window tile at the tilemap position specified by ('x', 'y') to 'tile'.
+	'tile' is the index of the tile to use for the window at the specified position.
+	The window and background use the same set of tiles.
+
+void setScrollX(uint8 scrollX)
+	Sets the horizontal scroll to the given value.
+	This value specifies the position of the left edge of the screen in the tilemap (in pixels).
+
+void setScrollY(uint8 scrollY)
+	Sets the vertical scroll to the given value.
+	This value specifies the position of the top edge of the screen in the tilemap (in pixels).
+
+void setWindowX(uint8 windowX)
+	Sets the window's x coordinate to the given value.
+	This value specifies the position of the left edge of the window (in pixels).
+
+void setWindowY(uint8 windowY)
+	Sets the window's y coordinate to the given value.
+	This value specifies the position of the top edge of the window (in pixels).
+
+void clearVRAM()
+	Clears all VRAM (loaded tiles, the tilemap and the window).
+
+void clearTilemap()
+	Clears the tilemap.
+
+void clearWindow()
+	Clears the window.
+
+void loadTiles1bpp(uint8[] tiles, uint8 tile_id, uint8 numTiles)
+	Loads 'numTiles' tiles from 'tiles' into VRAM at the tile index specified by 'tile_id'.
+	The Gameboy uses a tile based graphics system with tiles of 8x8 pixels.
+	These tiles are used for both, background and sprite graphics.
+	A tile consists of 8 bytes. Each byte corresponds to a line of the tile.
+	Each bit of a byte corresponds to a pixel of the line.
+	A bit value of 1 results in a black pixel, a bit value of 0 results in a white/transparent pixel.
+	The tiles are loaded sequentially from the given array, i.e. the first 8 bytes are the first tile, the second 8 bytes are the second tile, and so on.
+
+void loadTiles(uint16[] tiles, uint8 tile_id, uint8 numTiles)
+	Loads 'numTiles' tiles from 'tiles' into VRAM at the tile index specified by 'tile_id'.
+	The Gameboy uses a tile based graphics system with tiles of 8x8 pixels.
+	These tiles are used for both, background and sprite graphics.
+	Tiles are interpreted in the raw format of the Game Boy.
+	A tile consists of 8 words. Each word corresponds to a line of the tile.
+	The two bytes of the word get interleaved (i.e. the bits of the high byte get inserted in between the bits of the low byte)
+	and each pair of bits determines the index of the palette entry to use.
+	The tiles are loaded sequentially from the given array, i.e. the first 8 words are the first tile, the second 8 words are the second tile, and so on.
+
+void loadPalettes(uint16[] palettes, uint8 destination, uint8 numPalettes)
+	Loads 'numPalettes' palettes from 'palettes' into the color palettes at 'destination'.
+	Each palette consists of 4 colors in 15-bit BGR format (5 bits per channel).
+	There is a total of 16 palettes. The first 8 palettes are used for background tiles,
+	the other 8 palettes are used for sprite tiles. The palette to be used can be specified in the 3 least significant bits of the corresponding flags.
+	The two sets of palettes need to be loaded seperately.
+
+void setFlags(uint8 flags, uint8 x, uint8 y)
+	Sets the background flags at the tilemap position specified by ('x', 'y') to 'flags'.
+	Bit 7 - Render this tile on top of sprites (Color 0 will still be behind sprites)
+	Bit 6 - Flip vertically
+	Bit 5 - Flip horizontally
+	Bit 4 - Unused
+	Bit 3 - Always set this to 0
+	Bit 2 - 0 - Palette
+
+============= SOUND =============
+void playNoteOnChannel1(uint8 note)
+	Plays the note specified by 'note' on the first square wave channel.
+	Notes are specified by semitones starting from C2.
+	You can find a table on http://www.sengpielaudio.com/Rechner-notennamen.htm . Just subtract 16 from the number of the key.
+
+void setChannel1noteAndVolume(uint8 note, uint8 volume)
+	Sets the note and the volume for the first square wave channel.
+	The note gets played continuously until anything else is played on this channel.
+
+void playNoteOnChannel2(uint8 note)
+	Plays the note specified by 'note' on the second square wave channel.
+	Notes are specified by semitones starting from C2.
+	You can find a table on http://www.sengpielaudio.com/Rechner-notennamen.htm . Just subtract 16 from the number of the key.
+
+void setChannel2noteAndVolume(uint8 note, uint8 volume)
+	Sets the note and the volume for the second square wave channel.
+	The note gets played continuously until anything else is played on this channel.
+
+void playNoteOnChannel3(uint8 note)
+	Plays the note specified by 'note' on the wave output channel.
+	Notes are specified by semitones starting from C2.
+	You can find a table on http://www.sengpielaudio.com/Rechner-notennamen.htm . Just subtract 16 from the number of the key.
+
+void setChannel3noteAndVolume(uint8 note, uint8 volume)
+	Sets the note and the volume for the wave output channel.
+	The note gets played continuously until anything else is played on this channel.
+
+void playNoise(uint8 parameters)
+	Plays noise with the specified 'parameters'.
+	The frequency of the noise is calculated by the following formula:
+	Frequency = 524288 Hz / r / 2^(s+1) ; For r=0 will be treated as r=0.5
+	Bit 7-4 - Shift Clock Frequency (s)
+	Bit 3   - Counter Step/Width (0=15 bits, 1=7 bits)
+	Bit 2-0 - Dividing Ratio of Frequencies (r)
+
+void enableSound()
+	Enables sound. The BIOS of the gameboy leaves sound enabled.
+	You only need to enable sound if you previously disabled it.
+
+void disableSound()
+	Disables sound.
+
+void setVolume(uint8 volume)
+	Sets the master volume of the game to 'volume' (values range from 0 - silence to 7 - max volume).
+	The BIOS of the gameboy leaves this at 7.
+
+============= INPUT =============
+uint8 getButtonStates()
+	Returns the current button states. The states are active-low that means 0 corresponds to pressed.
+	The value is made up as follows:
+	Bit 7 - Down
+	Bit 6 - Up
+	Bit 5 - Left
+	Bit 4 - Right
+	Bit 3 - Start
+	Bit 2 - Select
+	Bit 1 - Button B
+	Bit 0 - Button A
+
+NOTE: In the Interpreter Down, Up, Left and Right are mapped to the arrow keys, Button B is mapped to the A key, Button A is mapped to the S key, Start is mapped to Return and Select is mapped to right Shift.
+
+============ GENERAL ============
+uint8 rand()
+	Returns a random number. The random number is based on time. That means that subsequent calls with small delays will yield sub-optimal results.
+
+void memset(uint8[] array, uint8 value, uint16 numBytes)
+	Sets 'numBytes' bytes to 'value' in the array 'array'.
+
+void memcpy(uint8[] source, uint8[] destination, uint16 numBytes)
+	Copies 'numBytes' bytes from the array 'source' to the array 'destination'.
+
+=========== TESTING =============
+void printByte(uint8 var)
+	Print the given variable as unsigned byte.
+void printSignedByte(int8 var)
+	Print the given variable as signed byte.
+void printBCD(bcd var)
+	Print the given variable in bcd format.
+void printWord(uint16 var)
+	Print the given variable as unsigned word.
+void printSignedWord(int16 var)
+	Print the given variable as signed word.
+void printChar(uint8 character)
+	Prints the given variable as a character.
+void printBool(bool var)
+	Prints the given variable as a boolean.
+void printString(uint8[] string)
+	Prints the given variable as a string.
+void printStringLn(uint8[] string)
+	Prints the given variable as a string followed by a newline character.
+void printByteArray(uint8[] array, uint16 size)
+	Prints the given variable as an array of 'size' bytes.
+void printSignedByteArray(int8[] array, uint16 size)
+	Prints the given variable as an array of 'size' signed bytes.
+void printBCDarray(bcd[] array, uint16 size)
+	Prints the given variable as an array of 'size' bcds.
+void printWordArray(uint16[] array, uint16 size, boolean bigEndian)
+	Prints the given variable as an array of 'size' words read with the given endianess.
+	NOTE: The endianess is an aspect of your compiler and should be set according to the endianess it uses to store arrays.
+	      The parameter 'bigEndian' should never be present in the AST.
+void printSignedWordArray(int16[] array, uint16 size, boolean bigEndian)
+	Prints the given variable as an array of 'size' signed words read with the given endianess.
+	NOTE: The endianess is an aspect of your compiler and should be set according to the endianess it uses to store arrays.
+	      The parameter 'bigEndian' should never be present in the AST.
+void printCharArray(uint8[] array, uint16 size)
+	Prints the given variable as an array of 'size' chars.
+void printBoolArray(bool[] array, uint16 size)
+	Prints the given variable as an array of 'size' bools.
+void printFixed(fixed var)
+	Prints the given variable as a fixed point number.
+void printFixedArray(fixed[] array, uint16 size, boolean bigEndian)
+	Prints the given variable as an array of 'size' fixed point numbers read with the given endianess.
+	NOTE: The endianess is an aspect of your compiler and should be set according to the endianess it uses to store arrays.
+	      The parameter 'bigEndian' should never be present in the AST.
+
+======= INTERPRETER ONLY ========
+void print(any var)
+	Prints the given variable.
+void type(any var)
+	Prints the type of the given variable.
