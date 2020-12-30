@@ -1,11 +1,8 @@
 package me.hannah
 
 import me.hannah.parser.HannahLanguageBaseListener
-import me.hannah.parser.HannahLanguageListener
 import me.hannah.parser.HannahLanguageParser
-import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.ErrorNode
-import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.FileWriter
 
 class HannahLanguageListenerImpl(
@@ -14,7 +11,6 @@ class HannahLanguageListenerImpl(
 
   override fun visitErrorNode(node: ErrorNode?) {
     println("error at line ${node!!.sourceInterval.a}")
-
   }
 
   override fun enterRoot(ctx: HannahLanguageParser.RootContext?) {
@@ -67,5 +63,69 @@ class HannahLanguageListenerImpl(
 
   override fun enterIntLit(ctx: HannahLanguageParser.IntLitContext?) {
     writer.write("""<ExpressionElement><IntegerLiteral><Value>${ctx!!.NUMBER().text}</Value></IntegerLiteral></ExpressionElement>""")
+  }
+
+  override fun enterPlusExpr(ctx: HannahLanguageParser.PlusExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>add</Operator>""")
+  }
+
+  override fun exitPlusExpr(ctx: HannahLanguageParser.PlusExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
+  override fun enterMinusExpr(ctx: HannahLanguageParser.MinusExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>sub</Operator>""")
+  }
+
+  override fun exitMinusExpr(ctx: HannahLanguageParser.MinusExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
+  override fun enterMulExpr(ctx: HannahLanguageParser.MulExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>mul</Operator>""")
+  }
+
+  override fun exitMulExpr(ctx: HannahLanguageParser.MulExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
+  override fun enterDivExpr(ctx: HannahLanguageParser.DivExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>div</Operator>""")
+  }
+
+  override fun exitDivExpr(ctx: HannahLanguageParser.DivExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
+  override fun enterRExpr(ctx: HannahLanguageParser.RExprContext?) {
+    writer.write("<Right>")
+  }
+
+  override fun exitRExpr(ctx: HannahLanguageParser.RExprContext?) {
+    writer.write("</Right>")
+  }
+
+  override fun enterLTerm(ctx: HannahLanguageParser.LTermContext?) {
+    writer.write("<Left>")
+  }
+
+  override fun exitLTerm(ctx: HannahLanguageParser.LTermContext?) {
+    writer.write("</Left>")
+  }
+
+  override fun enterRTerm(ctx: HannahLanguageParser.RTermContext?) {
+    writer.write("<Right>")
+  }
+
+  override fun exitRTerm(ctx: HannahLanguageParser.RTermContext?) {
+    writer.write("</Right>")
+  }
+
+  override fun enterLFactor(ctx: HannahLanguageParser.LFactorContext?) {
+    writer.write("<Left>")
+  }
+
+  override fun exitLFactor(ctx: HannahLanguageParser.LFactorContext?) {
+    writer.write("</Left>")
   }
 }

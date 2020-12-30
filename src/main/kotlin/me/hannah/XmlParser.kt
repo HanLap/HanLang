@@ -99,6 +99,7 @@ class XmlParser(
         "Call" -> handleCall(this)
         "IntegerLiteral" -> handleIntegerLiteral(this)
         "Place" -> handleVariableLd(this)
+        "Binary" -> handleNumberBinary(this)
       }
       output.write("  push af\n")
     }
@@ -150,8 +151,34 @@ class XmlParser(
       .let { output.write("\n  call $it\n\n") }
   }
 
-  private fun handle8BitLd(register: String, value: String) {
-    output.write("  ld $register, $value\n")
+
+  private fun handleNumberBinary(node: Element) {
+    val op = node.getChildByTagName("Operator").textContent
+    val l = node.getChildByTagName("Left").firstChild
+    val r = node.getChildByTagName("Right").firstChild
+
+    handleExpressionElement(l as Element)
+    handleExpressionElement(r as Element)
+
+    val stmnt = when(op) {
+      "add" -> "add c"
+      "sub" -> "sub c"
+      "mul" -> "call mul"
+      "div" -> "call div"
+      else -> throw Error("Unknown binary operator '$op'")
+    }
+
+    output.write(
+      """
+     |  pop af
+     |  ld c, a
+     |  pop af
+     |  $stmnt
+     |
+     
+     
+    """.trimIndent().trimMargin()
+    )
   }
 
   private fun handleIntegerLiteral(node: Element) {
@@ -160,7 +187,6 @@ class XmlParser(
         output.write("  ld a, $it\n")
       }
   }
-
 
 
   private fun handleVariableLd(node: Element) {
@@ -175,6 +201,8 @@ class XmlParser(
     |  ld hl, $${name.toString(16)}
     |  ld a, [hl]
     |
+    
+    
     """.trimIndent().trimMargin()
     )
   }

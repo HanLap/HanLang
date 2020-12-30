@@ -44,6 +44,7 @@ tasks {
   register<Exec>("compileASM") {
 //    isIgnoreExitValue = true
     workingDir("$buildDir/compiler/build")
+//    commandLine("rm -f linkfile main.gb main.o main.sym")
     commandLine("make")
   }
 
@@ -73,7 +74,6 @@ tasks {
     )
 
   }
-
 
   register<JavaExec>("runCMD") {
     main = "me.hannah.MainKt"

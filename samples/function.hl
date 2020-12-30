@@ -1,0 +1,17 @@
+
+
+timesTwo :: (int8): int8
+timesTwo x = (x * 2)
+
+printSmth :: void
+printSmth = do
+  1 -> printByte
+  2 -> printByte
+  3 -> printByte
+  4 -> printByte
+
+main :: void
+main = do
+  x <- (3 -> timesTwo)
+  x -> printByte
+    -> printSmth
