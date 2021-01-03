@@ -10,13 +10,15 @@ plugins {
 group = "me.hannah"
 version = "1.0"
 
+val antlrVersion = "4.9"
+
 repositories {
   mavenCentral()
 }
 
 dependencies {
-  antlr("org.antlr:antlr4:4.9")
-  implementation("org.antlr:antlr4-runtime:4.7.2")
+  antlr("org.antlr:antlr4:$antlrVersion")
+  implementation("org.antlr:antlr4-runtime:$antlrVersion")
 }
 
 
@@ -67,12 +69,21 @@ tasks {
 
   }
 
-  register<JavaExec>("runXml") {
+  register<JavaExec>("runXML") {
     classpath = files("$buildDir/compiler/Interpreter.jar")
     args = listOf(
+      "--nogui",
       "$buildDir/compiler/output.xml"
     )
 
+  }
+
+  register<JavaExec>("runWithInterpreter") {
+    main = "me.hannah.MainKt"
+
+    classpath = sourceSets["main"].runtimeClasspath
+
+    finalizedBy("runXML")
   }
 
   register<JavaExec>("runCMD") {

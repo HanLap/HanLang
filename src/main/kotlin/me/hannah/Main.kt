@@ -19,12 +19,23 @@ fun main(args: Array<String>) {
   langParser(args[0])
 
   XmlParser("build/compiler/output.xml").parse()
+}
 
+fun getFunctionDefinitions(inputFile: String): Map<String, FunctionTypes> {
+  val input = CharStreams.fromFileName(inputFile)
 
+  val lexer = HannahLanguageLexer(input)
+  val tokens = CommonTokenStream(lexer)
+  val parser = HannahLanguageParser(tokens)
+
+  return FunctionDefinitionFinder().find(parser)
 }
 
 fun langParser(inputFile: String) {
-  println(File("").absolutePath)
+  println(File("").absolutePath + "/$inputFile")
+
+  val functionDefinitions = getFunctionDefinitions(inputFile)
+
   val input = CharStreams.fromFileName(inputFile)
 
   val lexer = HannahLanguageLexer(input)
@@ -33,7 +44,10 @@ fun langParser(inputFile: String) {
 
   val writer = FileWriter("build/compiler/output.xml")
   ParseTreeWalker.DEFAULT.walk(
-    HannahLanguageListenerImpl(writer),
+    HannahLanguageListenerImpl(
+      writer,
+      functionDefinitions
+    ),
     parser.root()
   )
   writer.close()

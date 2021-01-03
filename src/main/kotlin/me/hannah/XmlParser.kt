@@ -6,33 +6,84 @@ import java.io.FileInputStream
 import java.io.FileWriter
 import java.text.ParseException
 import javax.xml.parsers.DocumentBuilderFactory
+import kotlin.collections.HashMap
 
 class XmlParser(
   private val inputFileName: String
 ) {
 
   private val output = FileWriter("build/compiler/build/main.asm")
+  private val write: (String) -> Unit = output::write
+  private fun writeLn(string: String = "") = write("  $string\n")
+  private fun debug(string: String) = write("$string\n")
 
   companion object {
     val REGISTER_CONVENTION_8BIT = listOf("a", "c", "b", "e", "d", "l", "h")
   }
 
   inner class VariablePointer {
-    private val variableMap = HashMap<String, Int>()
-    private var pointer = 0xD000
+    private val variableStack = arrayListOf<HashMap<String, Int>>(HashMap())
+    var stackEnd = 0
+      private set
+//    init {
+//      variableStack.push(HashMap())
+//    }
+
+    fun openScope() {
+      variableStack.add(HashMap())
+    }
+
+    fun closeScope() {
+      val scope = variableStack.last()
+      stackEnd -= scope.size * 2
+
+      variableStack.removeLast()
+    }
+
+    fun push(reg: String) {
+      stackEnd += 2
+      writeLn("push $reg ; stack: $stackEnd")
+    }
+
+    fun pop(reg: String) {
+      stackEnd -= 2
+      writeLn("pop $reg ; stack: $stackEnd")
+    }
+
+    fun call(name: String) {
+      stackEnd += 2
+      writeLn("call $name\n")
+    }
+
+    fun ret() {
+      stackEnd -= 2
+      writeLn("ret")
+    }
+
+    fun declare(name: String): Int {
+      require(!variableStack.last().containsKey(name)) {
+        throw Error("variable $name already declared in this scope!")
+      }
+      variableStack.last()[name] = stackEnd
+      stackEnd += 2
+      return variableStack.last()[name]!!
+    }
 
     fun getOrDeclare(name: String): Int {
-      if (variableMap.containsKey(name)) {
-        return variableMap[name]!!
+      variableStack.reversed().forEach {
+        if (it.containsKey(name)) {
+          return it[name]!!
+        }
       }
-      variableMap[name] = pointer
-      pointer += 2
-      return variableMap[name]!!
+      variableStack.last()[name] = stackEnd
+      stackEnd += 2
+      return variableStack.last()[name]!!
     }
   }
 
   private val variablePointer = VariablePointer()
-
+  private val pop = variablePointer::pop
+  private val push = variablePointer::push
 
   fun parse() {
     val factory = DocumentBuilderFactory.newInstance()
@@ -46,20 +97,82 @@ class XmlParser(
     output.write(
       """
       .include "../framework.asm"
-      .include "../custom.asm"
-      .section "main"
-      main:
-    
-    
+      .include "../custom.asm"   
+      
+      
     """.trimIndent()
     )
 
-    root.getElementsByTagName("Procedure")
-      .toElementList()
-      .first { it.getElementsByTagName("Name").item(0).textContent == "main" }
-      .getElementsByTagName("Block")
-      .item(0)
+    root
       .childNodes
+      .toElementList()
+      .forEach {
+        when (it.tagName) {
+          "Procedure" -> handleProcedureElement(it)
+          "Definition" -> handleDefinition(it)
+        }
+      }
+
+    output.close()
+  }
+
+  private fun handleProcedureElement(node: Element) {
+    val name = node.getChildByTagName("Name").textContent
+
+    output.write(
+      """
+      .section "$name"
+      $name:
+      
+      """.trimIndent()
+    )
+
+    variablePointer.openScope()
+
+    node.getChildrenByTagName("ParameterTypes")
+      .forEachIndexed { i, it ->
+        val pointer = variablePointer.declare(it.getChildByTagName("Name").textContent)
+
+        output.write(
+          """
+          |  ld hl, $${pointer.toString(16)}
+          |  ld [hl], ${REGISTER_CONVENTION_8BIT[i]}
+          |
+          |
+        """.trimMargin()
+        )
+      }
+
+    handleStatementElement(node.getChildByTagName("StatementElement"))
+
+    variablePointer.closeScope()
+
+    output.write(
+      """
+      .ends
+      
+      
+    """.trimIndent()
+    )
+  }
+
+
+  private fun handleStatementElement(node: Element) {
+    with(node.firstChild as Element) {
+      when (nodeName) {
+        "ExpressionElement" -> handleExpressionElement(this)
+        "Definition" -> handleDefinition(this)
+        "Return" -> handleReturnElement(this)
+        "Block" -> handleBlockElement(this)
+      }
+    }
+    pop("af")
+    writeLn()
+    writeLn()
+  }
+
+  private fun handleBlockElement(node: Element) {
+    node.childNodes
       .toElementList()
       .forEach {
         when (it.tagName) {
@@ -70,27 +183,13 @@ class XmlParser(
           )
         }
       }
-
-
-
-    output.write(
-      """
-      ret
-      .ends
-    """.trimIndent()
-    )
-    output.close()
   }
 
+  private fun handleReturnElement(node: Element) {
+    handleExpressionElement(node.getChildByTagName("ExpressionElement"))
 
-  private fun handleStatementElement(node: Element) {
-    with(node.firstChild) {
-      when (nodeName) {
-        "ExpressionElement" -> handleExpressionElement(this as Element)
-        "Definition" -> handleDefinition(this as Element)
-      }
-    }
-    output.write("  pop af\n\n")
+    pop("af")
+    variablePointer.ret()
   }
 
   private fun handleExpressionElement(node: Element) {
@@ -101,54 +200,46 @@ class XmlParser(
         "Place" -> handleVariableLd(this)
         "Binary" -> handleNumberBinary(this)
       }
-      output.write("  push af\n")
+      push("af")
+      writeLn()
     }
   }
 
   private fun handleDefinition(node: Element) {
-    val name = node
-      .getChildByTagName("Name")
-      .textContent
-      .let { variablePointer.getOrDeclare(it) }
-
     val value = node
       .getChildByTagName("ExpressionElement")
 
     handleExpressionElement(value)
 
-    output.write(
-      """
-      |  pop af
-      |  ld hl, $${name.toString(16)}
-      |  ld [hl], a
-      |  push af
-      
-      
-      """.trimIndent().trimMargin()
-    )
+    val name = node
+      .getChildByTagName("Name")
+      .textContent
+
+    debug("; assign var $name")
+    pop("af")
+    name.let { variablePointer.getOrDeclare(it) }
+    writeLn("push af")
+    push("af")
+    writeLn()
   }
 
   private fun handleCall(node: Element) {
+    val name = node.getChildrenByTagName("Name")
+      .first()
+      .textContent
+
     val args = node.getChildrenByTagName("ExpressionElement")
 
     args.forEach { handleExpressionElement(it) }
 
+    debug("; calling $name")
     ((args.size - 1) downTo 0).forEach {
-      output.write(
-        """
-      |  pop af
-      |  ld ${REGISTER_CONVENTION_8BIT[it]}, a
-      |
-      
-      
-      """.trimIndent().trimMargin()
-      )
+      pop("af")
+      writeLn("ld ${REGISTER_CONVENTION_8BIT[it]}, a")
     }
 
-    node.getChildrenByTagName("Name")
-      .first()
-      .textContent
-      .let { output.write("\n  call $it\n\n") }
+
+    writeLn("call $name")
   }
 
 
@@ -160,7 +251,7 @@ class XmlParser(
     handleExpressionElement(l as Element)
     handleExpressionElement(r as Element)
 
-    val stmnt = when(op) {
+    val stmnt = when (op) {
       "add" -> "add c"
       "sub" -> "sub c"
       "mul" -> "call mul"
@@ -168,23 +259,18 @@ class XmlParser(
       else -> throw Error("Unknown binary operator '$op'")
     }
 
-    output.write(
-      """
-     |  pop af
-     |  ld c, a
-     |  pop af
-     |  $stmnt
-     |
-     
-     
-    """.trimIndent().trimMargin()
-    )
+    pop("af")
+    writeLn("ld c, a")
+    pop("af")
+    writeLn(stmnt)
+    writeLn()
   }
 
   private fun handleIntegerLiteral(node: Element) {
     node.getElementsByTagName("Value").item(0).textContent
       .let {
-        output.write("  ld a, $it\n")
+        debug("; load int literal $it")
+        writeLn("ld a, $it")
       }
   }
 
@@ -194,17 +280,13 @@ class XmlParser(
       .getChildByTagName("Variable")
       .getChildByTagName("Name")
       .textContent
-      .let { variablePointer.getOrDeclare(it) }
 
-    output.write(
-      """
-    |  ld hl, $${name.toString(16)}
-    |  ld a, [hl]
-    |
-    
-    
-    """.trimIndent().trimMargin()
-    )
+    val offset = name.let { variablePointer.getOrDeclare(it) }
+
+    debug("; load var $name; offset: $offset")
+    writeLn("add sp, ${(variablePointer.stackEnd - offset) - 2}")
+    writeLn("pop af")
+    writeLn("add sp, ${-(variablePointer.stackEnd - offset)}")
   }
 
   private fun NodeList.toElementList() =

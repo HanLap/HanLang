@@ -1,0 +1,29 @@
+
+// main :: void
+// main do
+//   y <- ((5 -> fn) + 3)
+//   y -> printByte
+//   (2 -> mulTwo) -> printByte
+// end
+//
+//
+// fn :: (int8): int8
+// fn x do
+//   x -> printByte
+//   x
+// end
+//
+// global <- 42
+
+add :: (int8 int8): int8
+add x y = (x + y)
+
+mulTwo :: (int8): int8
+mulTwo x = (x * 2)
+
+main :: void
+main do
+  i <- 3
+  (3 -> mulTwo) -> printByte
+  (2 2 -> add)  -> printByte
+end

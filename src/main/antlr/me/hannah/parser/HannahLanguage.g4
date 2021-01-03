@@ -4,9 +4,8 @@ grammar HannahLanguage;
 /*
  * Parser Rules
  */
-root          : stmnts EOF ;
-stmnts        : stmnts stmnt | stmnt ;
-stmnt         : call | varDec ;
+root          : rootDef+ EOF ;
+rootDef       : typeDef | fnDef | varDec;
 
 
 expr          : intLit | '(' call ')' | varRef | boolExpr | '(' numberExpr ')' ;
@@ -47,23 +46,29 @@ numberParen   : '(' numberExpr ')' ;
 
 numberExpr    : numberTerm   | plusExpr | minusExpr ;
 numberTerm    : numberFactor | mulExpr  | divExpr   ;
-numberFactor  : intLit | numberParen | '-' numberFactor ;
+numberFactor  : expr | numberParen | '-' numberFactor ;
 
 
 /*
-<Exp> ::= <Exp> + <Term> |
-    <Exp> - <Term> |
-    <Term>
-
-<Term> ::= <Term> * <Factor> |
-    <Term> / <Factor> |
-    <Factor>
-
-<Factor> ::= x | y | ... |
-    ( <Exp> ) |
-    - <Factor>
+ * functions
 */
+fnDef         : fnName fnArgs (exprBody | blockBody) ;
+exprBody      : '=' expr ;
+blockBody     : 'do' block 'end' ;
+fnArgs        : ID* ;
+fnName        : ID ;
 
+block         : stmnts blockReturn? ;
+stmnts        : stmnt* ;
+stmnt         : call | varDec ;
+blockReturn   : expr ;
+
+
+typeDef       : argsTypeDef | noArgsTypeDef ;
+noArgsTypeDef : fnName '::' type ;
+argsTypeDef   : fnName '::' '(' defArgs '):' type ;
+defArgs       : type+ ;
+type          : ID  ;
 
 /*
 * literals
@@ -77,9 +82,11 @@ id            : ID  ;
  */
 
 BOOL        : 'false' | 'true';
-ID          : [a-zA-Z]+ ;
+//ID          : [a-zA-Z]+ ;
+ID          : [a-zA-Z][a-zA-Z0-9]* ;
 NUMBER      : [0-9]+ ;
 
+BLOCKCOMMENT: '/?'[.]*'?/' -> skip ;
 COMMENT     : '//'~([\n\r])* -> skip ;
 END         : [\n\r]+ -> skip ;
 WS          : [ \t]+  -> skip ;
