@@ -19,6 +19,7 @@ fn :: (int8 int8): void
 fn x y do
   i <- 9
   (x + y) -> printByte
+  (4 -> mulTwo) -> printByte
   (2+2)
 end
 

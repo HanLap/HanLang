@@ -86,19 +86,6 @@ class XmlParser(
     write("$name:\n")
 
 
-//    debug("; save prior bp to stack")
-//    writeLn("ld a, (\$d000)")
-//    writeLn("ld l, a")
-//    writeLn("ld a, (\$d001)")
-//    writeLn("ld h, a")
-//    writeLn("push hl")
-
-
-    // save basePointer
-    debug("; save base pointer")
-    writeLn("ld ($bp), sp")
-    writeLn()
-
     val types = node.getChildrenByTagName("ParameterTypes")
     val args: Map<String, ArgumentData> =
       types.mapIndexed { i, it ->
@@ -116,11 +103,26 @@ class XmlParser(
     writeLn()
 
 
+    debug("; save prior bp to stack")
+    writeLn("ld a, (\$d000)")
+    writeLn("ld l, a")
+    writeLn("ld a, (\$d001)")
+    writeLn("ld h, a")
+    writeLn("push hl")
+
+
+    // save basePointer
+    debug("; save base pointer")
+    writeLn("ld ($bp), sp")
+    writeLn()
+
+
+
     handleStatementElement(node.getChildByTagName("StatementElement"), args)
 
 
     write("+:\n")
-    debug("; restore old stack pointer")
+    debug("; move SP to BP")
     writeLn("ld c, a")
     writeLn("ld a, (\$d000)")
     writeLn("ld l, a")
@@ -128,10 +130,15 @@ class XmlParser(
     writeLn("ld h, a")
     writeLn("ld sp, hl")
 
-//    debug("; restore prior bp")
-//    writeLn("pop hl")
-//
-//
+    debug("; restore prior bp")
+    writeLn("pop hl")
+    writeLn("ld a, l")
+    writeLn("ld (\$d000), a")
+    writeLn("ld a, h")
+    writeLn("ld (\$d001), a")
+
+
+    writeLn("add sp, ${args.size *2}")
     writeLn("ld a, c")
 
     writeLn("ret")
@@ -299,7 +306,7 @@ class XmlParser(
       writeLn("ld h, d")
       writeLn("ld l, e")
       writeLn("ld sp, hl")
-      writeLn("add sp, ${-data.offset -2}")
+      writeLn("add sp, ${(args.size*2) - data.offset }")
       writeLn("pop af")
 
       // restore sp
