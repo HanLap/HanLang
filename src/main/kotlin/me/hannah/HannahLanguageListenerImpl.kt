@@ -32,8 +32,24 @@ class HannahLanguageListenerImpl(
   }
 
   override fun enterVarDec(ctx: VarDecContext?) {
-    writer.write("""<Definition>""".trimIndent())
+    writer.write("<Definition>")
   }
+
+
+  //  y <- 10
+
+  /*
+  <var declaration>
+     <id>y</id>
+
+     <expression>
+      <intLit>
+        10
+      </intLit>
+    </expression>
+  </var declaration>
+
+   */
 
   override fun exitVarDec(ctx: VarDecContext?) {
     // ToDo: replace with correct element type

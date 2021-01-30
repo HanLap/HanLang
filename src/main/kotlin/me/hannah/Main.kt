@@ -16,7 +16,9 @@ import javax.xml.parsers.DocumentBuilderFactory
 fun main(args: Array<String>) {
   File("build/compiler/").mkdirs()
 
-  langParser(args[0])
+  val functionDefinitions = getFunctionDefinitions(args[0])
+
+  langParser(args[0], functionDefinitions)
 
   XmlParser("build/compiler/output.xml").parse()
 }
@@ -31,10 +33,9 @@ fun getFunctionDefinitions(inputFile: String): Map<String, FunctionTypes> {
   return FunctionDefinitionFinder().find(parser)
 }
 
-fun langParser(inputFile: String) {
+fun langParser(inputFile: String, functionDefinitions: Map<String, FunctionTypes>) {
   println(File("").absolutePath + "/$inputFile")
 
-  val functionDefinitions = getFunctionDefinitions(inputFile)
 
   val input = CharStreams.fromFileName(inputFile)
 

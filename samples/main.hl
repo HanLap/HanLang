@@ -15,15 +15,20 @@
 //
 // global <- 42
 
-add :: (int8 int8): int8
-add x y = (x + y)
+fn :: (int8 int8): void
+fn x y do
+  i <- 9
+  (x + y) -> printByte
+  (2+2)
+end
 
 mulTwo :: (int8): int8
 mulTwo x = (x * 2)
 
 main :: void
 main do
-  i <- 3
+  (2 3 -> fn) -> printByte
   (3 -> mulTwo) -> printByte
-  (2 2 -> add)  -> printByte
+  i -> printByte
 end
+

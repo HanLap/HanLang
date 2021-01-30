@@ -86,7 +86,7 @@ BOOL        : 'false' | 'true';
 ID          : [a-zA-Z][a-zA-Z0-9]* ;
 NUMBER      : [0-9]+ ;
 
-BLOCKCOMMENT: '/?'[.]*'?/' -> skip ;
+//BLOCKCOMMENT: '/?'[.]*'?/' -> skip ;
 COMMENT     : '//'~([\n\r])* -> skip ;
 END         : [\n\r]+ -> skip ;
 WS          : [ \t]+  -> skip ;
