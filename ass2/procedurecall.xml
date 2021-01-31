@@ -3,16 +3,36 @@
 	<Name>main</Name>
 	<StatementElement>
 		<Block>
-		<StatementElement>
-			<ExpressionElement>
-				<Call>
-				<Name>printByte</Name>
-					<ExpressionElement><IntegerLiteral>
-						 <Value>42</Value>
-					</IntegerLiteral></ExpressionElement>
-				</Call>
-			</ExpressionElement>
-		</StatementElement>
+		 <StatementElement>
+			 <While>
+				 <ExpressionElement>
+					 <Binary>
+						 <Operator>eq</Operator>
+						 <Left>
+							 <ExpressionElement>
+								 <IntegerLiteral>
+									 <Value>1</Value>
+								 </IntegerLiteral>
+							 </ExpressionElement>
+						 </Left>
+						 <Right>
+							 <ExpressionElement>
+								 <IntegerLiteral>
+									 <Value>1</Value>
+								 </IntegerLiteral>
+							 </ExpressionElement>
+						 </Right>
+					 </Binary>
+				 </ExpressionElement>
+				 <StatementElement>
+					 <ExpressionElement>
+						 <IntegerLiteral>
+							 <Value>1</Value>
+						 </IntegerLiteral>
+					 </ExpressionElement>
+				 </StatementElement>
+			 </While>
+		 </StatementElement>
 		</Block>
 	</StatementElement>
 	<TypeElement><Primitive>void</Primitive></TypeElement>

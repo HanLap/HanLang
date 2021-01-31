@@ -19,14 +19,17 @@ class XmlParser(
 
   private val bp = "\$D000"
 
-  private val output = FileWriter("build/compiler/build/main.asm")
-  private val write: (String) -> Unit = output::write
-  private fun writeLn(string: String = "") = write("  $string\n")
-  private fun debug(string: String) = write("$string\n")
+  private var labelN = 0
 
   companion object {
     val REGISTER_CONVENTION_8BIT = listOf("a", "c", "b", "e", "d", "l", "h")
   }
+
+
+  private val output = FileWriter("build/compiler/build/main.asm")
+  private fun write(string: String) = output.write(string)
+  private fun writeLn(string: String = "") = write("  $string\n")
+  private fun debug(string: String) = write("$string\n")
 
   private val heapManager = object {
     private var heapPointer = 0xD002
@@ -82,6 +85,8 @@ class XmlParser(
   private fun handleProcedureElement(node: Element) {
     val name = node.getChildByTagName("Name").textContent
 
+    val returnLabel = "ret_${labelN++}"
+
     write(".section \"$name\"\n")
     write("$name:\n")
 
@@ -89,7 +94,7 @@ class XmlParser(
     val types = node.getChildrenByTagName("ParameterTypes")
     val args: Map<String, ArgumentData> =
       types.mapIndexed { i, it ->
-        it.getChildByTagName("Name").textContent to ArgumentData(i*2)
+        it.getChildByTagName("Name").textContent to ArgumentData(i * 2)
       }.toMap()
 
     // save arguments to heap
@@ -118,10 +123,10 @@ class XmlParser(
 
 
 
-    handleStatementElement(node.getChildByTagName("StatementElement"), args)
+    handleStatementElement(node.getChildByTagName("StatementElement"), args, returnLabel)
 
 
-    write("+:\n")
+    write("$returnLabel:\n")
     debug("; move SP to BP")
     writeLn("ld c, a")
     writeLn("ld a, (\$d000)")
@@ -138,7 +143,7 @@ class XmlParser(
     writeLn("ld (\$d001), a")
 
 
-    writeLn("add sp, ${args.size *2}")
+    writeLn("add sp, ${args.size * 2}")
     writeLn("ld a, c")
 
     writeLn("ret")
@@ -147,30 +152,34 @@ class XmlParser(
   }
 
 
-  private fun handleStatementElement(node: Element, args: Arguments) {
+  private fun handleStatementElement(node: Element, args: Arguments, returnLabel: String) {
     with(node.firstChild as Element) {
-      // dont pop after block element
-      if (nodeName == "Block") {
-        handleBlockElement(this, args)
-      } else {
-        when (nodeName) {
-          "ExpressionElement" -> handleExpressionElement(this, args)
-          "Definition" -> handleDefinition(this, args)
-          "Return" -> handleReturnElement(this, args)
+      // dont pop after ...
+      when (nodeName) {
+        "Block" -> handleBlockElement(this, args, returnLabel)
+        "If" -> handleIfElement(this, args, returnLabel)
+        "While" -> handleWhileElement(this, args, returnLabel)
+        "Return" -> handleReturnElement(this, args, returnLabel)
+        // pop after ...
+        else -> {
+          when (nodeName) {
+            "ExpressionElement" -> handleExpressionElement(this, args)
+            "Definition" -> handleDefinition(this, args)
+          }
+          writeLn("pop af")
+          writeLn()
+          writeLn()
         }
-        writeLn("pop af")
-        writeLn()
-        writeLn()
       }
     }
   }
 
-  private fun handleBlockElement(node: Element, args: Arguments) {
+  private fun handleBlockElement(node: Element, args: Arguments, returnLabel: String) {
     node.childNodes
       .toElementList()
       .forEach {
         when (it.tagName) {
-          "StatementElement" -> handleStatementElement(it, args)
+          "StatementElement" -> handleStatementElement(it, args, returnLabel)
           else -> throw ParseException(
             "Expected Statement Element, found: ${it.tagName}",
             it.getUserData("lineNumber") as Int
@@ -179,11 +188,11 @@ class XmlParser(
       }
   }
 
-  private fun handleReturnElement(node: Element, args: Arguments) {
+  private fun handleReturnElement(node: Element, args: Arguments, returnLabel: String) {
     handleExpressionElement(node.getChildByTagName("ExpressionElement"), args)
 
     writeLn("pop af")
-    writeLn("jp +")
+    writeLn("jp ${returnLabel}")
   }
 
   private fun handleExpressionElement(node: Element, args: Arguments) {
@@ -254,6 +263,8 @@ class XmlParser(
       "sub" -> "sub c"
       "mul" -> "call mul"
       "div" -> "call div"
+      "and" -> "and c"
+      "or" -> "or c"
       else -> throw Error("Unknown binary operator '$op'")
     }
 
@@ -306,7 +317,7 @@ class XmlParser(
       writeLn("ld h, d")
       writeLn("ld l, e")
       writeLn("ld sp, hl")
-      writeLn("add sp, ${(args.size*2) - data.offset }")
+      writeLn("add sp, ${(args.size * 2) - data.offset}")
       writeLn("pop af")
 
       // restore sp
@@ -323,6 +334,93 @@ class XmlParser(
       throw Error("variable $name is neither an argument of the current function nor allocated on the heap")
     }
 
+  }
+
+  private fun handleWhileElement(node: Element, args: Arguments, returnLabel: String) {
+
+    val startLabel = "while_${labelN++}"
+    val endLabel = "while_${labelN++}"
+
+    write("$startLabel:\n")
+    handleCondition(node.getChildByTagName("ExpressionElement"), args, startLabel, endLabel)
+    debug("; while body")
+    handleStatementElement(node.getChildByTagName("StatementElement"), args, returnLabel)
+    writeLn("jp $startLabel")
+    write("$endLabel:\n")
+  }
+
+  private fun handleIfElement(node: Element, args: Arguments, returnLabel: String) {
+    val condition = node.getChildByTagName("ExpressionElement")
+    val thenN = node.getChildByTagName("Then")
+    val elseN = node.getChildrenByTagName("Else").firstOrNull()
+
+    val endLabel = "if_${labelN++}"
+    val thenLabel = "if_${labelN++}"
+    val elseLabel = elseN?.let { "if_${labelN++}" }
+
+    handleCondition(condition, args, thenLabel, elseLabel ?: endLabel)
+
+    write("$thenLabel:\n")
+    handleStatementElement(thenN.getChildByTagName("StatementElement"), args, returnLabel)
+    writeLn("jp $endLabel")
+
+    elseN?.let {
+      write("$elseLabel:\n")
+      handleStatementElement(it.getChildByTagName("StatementElement"), args, returnLabel)
+    }
+    write("$endLabel:\n")
+  }
+
+  private fun handleCondition(
+    node: Element,
+    args: Arguments,
+    thenLabel: String,
+    elseLabel: String
+  ) {
+    handleBinaryJump(node.getChildByTagName("Binary"), args, thenLabel, elseLabel)
+
+
+  }
+
+  private fun handleBinaryJump(
+    node: Element,
+    args: Arguments,
+    thenLabel: String,
+    elseLabel: String
+  ) {
+    val op = node.getChildByTagName("Operator").textContent
+    val left = node.getChildByTagName("Left").firstChild
+    val right = node.getChildByTagName("Right").firstChild
+
+    // handle boolean expression and number calculation with default function
+    if (!arrayOf("eq", "lt", "gt", "leq", "geq").contains(op)) {
+      handleNumberBinary(node, args)
+    } else {
+      handleExpressionElement(left as Element, args)
+      handleExpressionElement(right as Element, args)
+
+      debug("; compare values")
+      writeLn("pop af")
+      writeLn("ld c, a")
+      writeLn("pop af")
+      writeLn("cp c")
+
+      debug("; check $op")
+      when (op) {
+        "eq" -> writeLn("jp nz, $elseLabel")
+        "lt" -> {
+          writeLn("jp nc, $elseLabel")
+          writeLn("jp  z, $elseLabel")
+        }
+        "gt" -> {
+          writeLn("jp  c, $elseLabel")
+          writeLn("jp  z, $elseLabel")
+        }
+        "leq" -> writeLn("jp nc, $elseLabel")
+        "geq" -> writeLn("jp  c, $elseLabel")
+      }
+      writeLn()
+    }
   }
 
   private fun NodeList.toElementList() =

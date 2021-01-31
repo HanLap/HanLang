@@ -1,0 +1,13 @@
+
+
+fib :: (int8): int8
+fib n do
+  if (n < 2)
+    then ret n
+    else ret ((n - 1) -> fib) + ((n - 2) -> fib)
+end
+
+main :: void
+main do
+   8 -> fib -> printByte
+end

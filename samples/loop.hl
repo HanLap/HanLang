@@ -1,0 +1,8 @@
+ main :: void
+ main do
+  i <- 0
+  loop (i < 100) do
+    i -> printByte
+    i <- i + 1
+  end
+ end

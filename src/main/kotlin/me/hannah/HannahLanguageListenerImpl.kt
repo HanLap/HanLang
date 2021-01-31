@@ -35,22 +35,6 @@ class HannahLanguageListenerImpl(
     writer.write("<Definition>")
   }
 
-
-  //  y <- 10
-
-  /*
-  <var declaration>
-     <id>y</id>
-
-     <expression>
-      <intLit>
-        10
-      </intLit>
-    </expression>
-  </var declaration>
-
-   */
-
   override fun exitVarDec(ctx: VarDecContext?) {
     // ToDo: replace with correct element type
     writer.write("""<TypeElement><Primitive>int8</Primitive></TypeElement></Definition>""".trimIndent())
@@ -100,6 +84,14 @@ class HannahLanguageListenerImpl(
     writer.write("""</Binary></ExpressionElement>""")
   }
 
+  override fun enterOrExpr(ctx: OrExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>or</Operator>""")
+  }
+
+  override fun exitOrExpr(ctx: OrExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
   override fun enterMulExpr(ctx: MulExprContext?) {
     writer.write("""<ExpressionElement><Binary><Operator>mul</Operator>""")
   }
@@ -113,6 +105,54 @@ class HannahLanguageListenerImpl(
   }
 
   override fun exitDivExpr(ctx: DivExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
+  override fun enterAndExpr(ctx: AndExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>and</Operator>""")
+  }
+
+  override fun exitAndExpr(ctx: AndExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
+  override fun enterEqExpr(ctx: EqExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>eq</Operator>""")
+  }
+
+  override fun exitEqExpr(ctx: EqExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
+  override fun enterLtExpr(ctx: LtExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>lt</Operator>""")
+  }
+
+  override fun exitLtExpr(ctx: LtExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
+  override fun enterGtExpr(ctx: GtExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>gt</Operator>""")
+  }
+
+  override fun exitGtExpr(ctx: GtExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
+  override fun enterLeqExpr(ctx: LeqExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>leq</Operator>""")
+  }
+
+  override fun exitLeqExpr(ctx: LeqExprContext?) {
+    writer.write("""</Binary></ExpressionElement>""")
+  }
+
+  override fun enterGeqExpr(ctx: GeqExprContext?) {
+    writer.write("""<ExpressionElement><Binary><Operator>geq</Operator>""")
+  }
+
+  override fun exitGeqExpr(ctx: GeqExprContext?) {
     writer.write("""</Binary></ExpressionElement>""")
   }
 
@@ -148,6 +188,61 @@ class HannahLanguageListenerImpl(
     writer.write("</Left>")
   }
 
+  override fun enterRCompExpr(ctx: RCompExprContext?) {
+    writer.write("<Right>")
+  }
+
+  override fun exitRCompExpr(ctx: RCompExprContext?) {
+    writer.write("</Right>")
+  }
+
+  override fun enterLCompExpr(ctx: LCompExprContext?) {
+    writer.write("<Left>")
+  }
+
+  override fun exitLCompExpr(ctx: LCompExprContext?) {
+    writer.write("</Left>")
+  }
+
+  override fun enterLBoolTerm(ctx: LBoolTermContext?) {
+    writer.write("<Left>")
+  }
+
+  override fun exitLBoolTerm(ctx: LBoolTermContext?) {
+    writer.write("</Left>")
+  }
+
+  override fun enterLBoolFactor(ctx: LBoolFactorContext?) {
+    writer.write("<Left>")
+  }
+
+  override fun exitLBoolFactor(ctx: LBoolFactorContext?) {
+    writer.write("</Left>")
+  }
+
+  override fun enterRBoolTerm(ctx: RBoolTermContext?) {
+    writer.write("<Right>")
+  }
+
+  override fun exitRBoolTerm(ctx: RBoolTermContext?) {
+    writer.write("</Right>")
+  }
+
+  override fun enterRBoolExpr(ctx: RBoolExprContext?) {
+    writer.write("<Right>")
+  }
+
+  override fun exitRBoolExpr(ctx: RBoolExprContext?) {
+    writer.write("</Right>")
+  }
+
+  override fun enterWhileStmnt(ctx: WhileStmntContext?) {
+    writer.write("<While>")
+  }
+
+  override fun exitWhileStmnt(ctx: WhileStmntContext?) {
+    writer.write("</While>")
+  }
 
   override fun enterTypeDef(ctx: TypeDefContext?) {
 
@@ -182,6 +277,14 @@ class HannahLanguageListenerImpl(
     writer.write("</Return></StatementElement>")
   }
 
+  override fun enterRetStmnt(ctx: RetStmntContext?) {
+    writer.write("<Return>")
+  }
+
+  override fun exitRetStmnt(ctx: RetStmntContext?) {
+    writer.write("</Return>")
+  }
+
   override fun enterBlockBody(ctx: BlockBodyContext?) {
     writer.write("<StatementElement><Block>")
   }
@@ -196,5 +299,29 @@ class HannahLanguageListenerImpl(
 
   override fun exitBlockReturn(ctx: BlockReturnContext?) {
     writer.write("</Return></StatementElement>")
+  }
+
+  override fun enterIfStmnt(ctx: IfStmntContext?) {
+    writer.write("<If>")
+  }
+
+  override fun exitIfStmnt(ctx: IfStmntContext?) {
+    writer.write("</If>")
+  }
+
+  override fun enterThenStmnt(ctx: ThenStmntContext?) {
+    writer.write("<Then>")
+  }
+
+  override fun exitThenStmnt(ctx: ThenStmntContext?) {
+    writer.write("</Then>")
+  }
+
+  override fun enterElseStmnt(ctx: ElseStmntContext?) {
+    writer.write("<Else>")
+  }
+
+  override fun exitElseStmnt(ctx: ElseStmntContext?) {
+    writer.write("</Else>")
   }
 }

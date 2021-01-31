@@ -8,27 +8,44 @@ root          : rootDef+ EOF ;
 rootDef       : typeDef | fnDef | varDec;
 
 
-expr          : intLit | '(' call ')' | varRef | boolExpr | '(' numberExpr ')' ;
+expr          : numberExpr | boolExpr | '(' call ')' | varRef ;
 
 args          : args arg | arg ;
 arg           : expr ;
-call          : args '->' id | '->' id | arg id arg ;
+call          : (args)? '->' id | arg id arg ;
 
 varDec        : id '<-' expr ;
-varRef        : id ;
+varRef        : id  ;
 
 
 /*
 * bool expressions
 */
-orExpr        : boolTerm   '||' boolTerm ;
-andExpr       : boolFactor '&&' boolFactor ;
-boolParen     : '(' boolExpr ')' ;
-notExpr       : '!' boolFactor ;
+rBoolExpr     : boolExpr   ;
+lBoolTerm     : boolTerm   ;
+rBoolTerm     : boolTerm   ;
+lBoolFactor   : boolFactor ;
+
+orExpr        : lBoolTerm   '||' rBoolExpr ;
+andExpr       : lBoolFactor '&&' rBoolTerm ;
 
 boolExpr      : boolTerm   | orExpr  ;
 boolTerm      : boolFactor | andExpr ;
-boolFactor    : boolLit    | notExpr | boolParen ;
+boolFactor    : boolLit | varRef | '(' (call | numberComp | boolFactor) ')' | '!' boolFactor ;
+
+/*
+* comparison
+*/
+lCompExpr     : numberExpr ;
+rCompExpr     : numberExpr ;
+
+eqExpr        : lCompExpr '='  rCompExpr ;
+ltExpr        : lCompExpr '<'  rCompExpr ;
+gtExpr        : lCompExpr '>'  rCompExpr ;
+leqExpr       : lCompExpr '<=' rCompExpr ;
+geqExpr       : lCompExpr '>=' rCompExpr ;
+
+numberComp    : eqExpr | ltExpr | gtExpr | leqExpr | geqExpr;
 
 /*
 * arithmetics
@@ -38,15 +55,25 @@ lTerm         : numberTerm   ;
 rTerm         : numberTerm   ;
 lFactor       : numberFactor ;
 
-plusExpr      : lTerm '+' rExpr   ;
-minusExpr     : lTerm '-' rExpr   ;
-mulExpr       : lFactor '*' rTerm ;
-divExpr       : lFactor '/' rTerm ;
+plusExpr      : lTerm   '+'  rExpr ;
+minusExpr     : lTerm   '-'  rExpr ;
+mulExpr       : lFactor '*'  rTerm ;
+divExpr       : lFactor '/'  rTerm ;
 numberParen   : '(' numberExpr ')' ;
 
-numberExpr    : numberTerm   | plusExpr | minusExpr ;
-numberTerm    : numberFactor | mulExpr  | divExpr   ;
-numberFactor  : expr | numberParen | '-' numberFactor ;
+numberExpr    : numberTerm   | plusExpr | minusExpr | orExpr  ;
+numberTerm    : numberFactor | mulExpr  | divExpr   | andExpr ;
+numberFactor  : intLit | '(' call ')' | varRef  | numberParen | '-' numberFactor ;
+
+
+/*
+* flow control
+*/
+ifStmnt       : 'if' boolExpr thenStmnt (elseStmnt)? ;
+thenStmnt     : 'then' (stmnt | blockBody) ;
+elseStmnt     : 'else' (stmnt | blockBody) ;
+
+whileStmnt    : 'loop' boolExpr (stmnt | blockBody) ;
 
 
 /*
@@ -60,7 +87,8 @@ fnName        : ID ;
 
 block         : stmnts blockReturn? ;
 stmnts        : stmnt* ;
-stmnt         : call | varDec ;
+stmnt         : call | varDec | ifStmnt | whileStmnt | retStmnt ;
+retStmnt           : 'ret' expr;
 blockReturn   : expr ;
 
 
