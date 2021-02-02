@@ -22,7 +22,7 @@ main:
 	call enableSound
 
 	; setVolume(7);
-	ld a, 7
+	ld a, 1
 	call setVolume
 
 	; clearVRAM();

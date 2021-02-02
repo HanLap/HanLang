@@ -40,6 +40,22 @@ class HannahLanguageListenerImpl(
     writer.write("""<TypeElement><Primitive>int8</Primitive></TypeElement></Definition>""".trimIndent())
   }
 
+  override fun enterTilemapDec(ctx: TilemapDecContext?) {
+    writer.write("<Definition><Name>_tilemap</Name><TypeElement><StructType><Field><Name></Name><TypeElement><ArrayType><TypeElement><Primitive>int8</Primitive></TypeElement></ArrayType></TypeElement></Field></StructType></TypeElement>")
+  }
+
+  override fun exitTilemapDec(ctx: TilemapDecContext?) {
+    writer.write("</Definition>")
+  }
+
+  override fun enterStructField(ctx: StructFieldContext?) {
+    writer.write("<Field>")
+  }
+
+  override fun exitStructField(ctx: StructFieldContext?) {
+    writer.write("</Field>")
+  }
+
   override fun enterStmnt(ctx: StmntContext?) {
     writer.write("""<StatementElement>""")
   }
@@ -66,6 +82,22 @@ class HannahLanguageListenerImpl(
 
   override fun enterIntLit(ctx: IntLitContext?) {
     writer.write("""<ExpressionElement><IntegerLiteral><Value>${ctx!!.NUMBER().text}</Value></IntegerLiteral></ExpressionElement>""")
+  }
+
+  override fun enterArrLit(ctx: ArrLitContext?) {
+    writer.write("<ExpressionElement><ArrayLiteral>")
+  }
+
+  override fun exitArrLit(ctx: ArrLitContext?) {
+    writer.write("</ArrayLiteral></ExpressionElement>")
+  }
+
+  override fun enterStructLit(ctx: StructLitContext?) {
+    writer.write("<ExpressionElement><StructLiteral>")
+  }
+
+  override fun exitStructLit(ctx: StructLitContext?) {
+    writer.write("</StructLiteral></ExpressionElement>")
   }
 
   override fun enterPlusExpr(ctx: PlusExprContext?) {

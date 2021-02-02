@@ -5,10 +5,10 @@ grammar HannahLanguage;
  * Parser Rules
  */
 root          : rootDef+ EOF ;
-rootDef       : typeDef | fnDef | varDec;
+rootDef       : typeDef | fnDef | varDec | tilemapDec;
 
 
-expr          : numberExpr | boolExpr | '(' call ')' | varRef ;
+expr          : numberExpr | boolExpr | '(' call ')' | varRef | arrLit | structLit ;
 
 args          : args arg | arg ;
 arg           : expr ;
@@ -16,6 +16,8 @@ call          : (args)? '->' id | arg id arg ;
 
 varDec        : id '<-' expr ;
 varRef        : id  ;
+
+tilemapDec    : 'tilemap' '<-' structLit ;
 
 
 /*
@@ -105,13 +107,17 @@ intLit        : NUMBER ;
 boolLit       : BOOL ;
 id            : ID  ;
 
+arrLit        : '[' (expr ',')* (expr)? ']' ;
+structLit     : '{' (structField',')* (structField)? '}';
+structField   : id ':' expr ;
+
 /*
  * Lexer Rules
  */
 
 BOOL        : 'false' | 'true';
 //ID          : [a-zA-Z]+ ;
-ID          : [a-zA-Z][a-zA-Z0-9]* ;
+ID          : [a-zA-Z_][a-zA-Z0-9_]* ;
 NUMBER      : [0-9]+ ;
 
 //BLOCKCOMMENT: '/?'[.]*'?/' -> skip ;

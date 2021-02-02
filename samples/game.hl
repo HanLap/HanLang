@@ -1,0 +1,27 @@
+main :: void
+main do
+  play <- 1
+
+  loop (play = 1) do
+    buttons <- (-> getButtonStates)
+
+    if (buttons = 1)
+      then play <- 0
+  end
+
+  body 1 1 -> setTile
+end
+
+
+tilemap <- {
+  body: [
+    11111111,
+    11111111,
+    11111111,
+    11111111,
+    11111111,
+    11111111,
+    11111111,
+    11111111,
+  ],
+}

@@ -25,6 +25,8 @@ class XmlParser(
     val REGISTER_CONVENTION_8BIT = listOf("a", "c", "b", "e", "d", "l", "h")
   }
 
+  private val tileMap = HashMap<String, Int>()
+
 
   private val output = FileWriter("build/compiler/build/main.asm")
   private fun write(string: String) = output.write(string)
@@ -69,17 +71,48 @@ class XmlParser(
     """.trimIndent()
     )
 
+    handleTileMap(root)
+
     root
       .childNodes
       .toElementList()
       .forEach {
         when (it.tagName) {
           "Procedure" -> handleProcedureElement(it)
-          "Definition" -> handleDefinition(it, mapOf())
+          "Definition" -> {
+            // skip if it is tilemap definition
+            if (it.getChildByTagName("Name").textContent != "_tilemap") {
+              handleDefinition(it, mapOf())
+            }
+          }
         }
       }
 
     output.close()
+  }
+
+  private fun handleTileMap(root: Element) {
+    write(".section \"tilemap\"\n")
+    write("tilemap:\n")
+    root
+      .getChildrenByTagName("Definition")
+      .find { it.getChildByTagName("Name").textContent == "_tilemap" }
+      ?.getChildByTagName("ExpressionElement")
+      ?.getChildByTagName("StructLiteral")
+      ?.getChildrenByTagName("Field")
+      ?.forEachIndexed { i, it ->
+        val name = it.getChildByTagName("Name").textContent
+        tileMap[name] = i + 1
+        it.getChildByTagName("ExpressionElement")
+          .getChildByTagName("ArrayLiteral")
+          .getChildrenByTagName("ExpressionElement")
+          .also { require(it.size == 8) { throw Error("tile $name does not have 8 int literals") } }
+          .map { it.getChildByTagName("IntegerLiteral").getChildByTagName("Value").textContent }
+          .forEach { writeLn(".db %$it") }
+        writeLn()
+      }
+    write(".ends\n\n")
+
   }
 
   private fun handleProcedureElement(node: Element) {
@@ -89,6 +122,16 @@ class XmlParser(
 
     write(".section \"$name\"\n")
     write("$name:\n")
+
+    // setup tiles if this is main procedure and tilemap is not empty
+    if (tileMap.isNotEmpty() && name == "main") {
+      val tileCount = tileMap.size
+      writeLn("call clearTilemap")
+      writeLn("ld hl, tilemap")
+      writeLn("ld a, 1")
+      writeLn("ld c, $tileCount")
+      writeLn("call loadTiles1bpp")
+    }
 
 
     val types = node.getChildrenByTagName("ParameterTypes")
@@ -234,9 +277,17 @@ class XmlParser(
       .first()
       .textContent
 
+
     val callArgs = node.getChildrenByTagName("ExpressionElement")
 
-    callArgs.forEach { handleExpressionElement(it, args) }
+
+    // handle setTile calls differently for magic
+    if (name == "setTile") {
+      handleSetTile(callArgs.first(), args)
+      callArgs.drop(1).forEach { handleExpressionElement(it, args) }
+    } else {
+      callArgs.forEach { handleExpressionElement(it, args) }
+    }
 
     debug("; calling $name")
     ((callArgs.size - 1) downTo 0).forEach {
@@ -247,6 +298,19 @@ class XmlParser(
 
     writeLn("call $name")
 
+  }
+
+  private fun handleSetTile(node: Element, args: Arguments) {
+    val name = node
+      .getChildByTagName("Place")
+      .getChildByTagName("Variable")
+      .getChildByTagName("Name")
+      .textContent
+
+    debug("; load tileId")
+    writeLn("ld a, ${tileMap.getOrElse(name) { throw Error("tile $name is not defined and can not be accessed") }}")
+    writeLn("push af")
+    writeLn()
   }
 
 
@@ -297,41 +361,45 @@ class XmlParser(
 //    writeLn("add sp, ${(variablePointer.stackEnd - offset) - 2}")
 //    writeLn("pop af")
 //    writeLn("add sp, ${-(variablePointer.stackEnd - offset)}")
-    if (args.containsKey(name)) {
-      val data = args[name]!!
-      // lf from arguments
+    when {
+      args.containsKey(name) -> {
+        val data = args[name]!!
+        // lf from arguments
 
-      // load bp
-      debug("; ld argument $name")
-      writeLn("ld a, (\$d000)")
-      writeLn("ld e, a")
-      writeLn("ld a, (\$d001)")
-      writeLn("ld d, a")
+        // load bp
+        debug("; ld argument $name")
+        writeLn("ld a, (\$d000)")
+        writeLn("ld e, a")
+        writeLn("ld a, (\$d001)")
+        writeLn("ld d, a")
 
-      // save sp
-      writeLn("ld hl, sp+0")
-      writeLn("ld b, h")
-      writeLn("ld c, l")
+        // save sp
+        writeLn("ld hl, sp+0")
+        writeLn("ld b, h")
+        writeLn("ld c, l")
 
-      // change sp to bp and pop value
-      writeLn("ld h, d")
-      writeLn("ld l, e")
-      writeLn("ld sp, hl")
-      writeLn("add sp, ${(args.size * 2) - data.offset}")
-      writeLn("pop af")
+        // change sp to bp and pop value
+        writeLn("ld h, d")
+        writeLn("ld l, e")
+        writeLn("ld sp, hl")
+        writeLn("add sp, ${(args.size * 2) - data.offset}")
+        writeLn("pop af")
 
-      // restore sp
-      writeLn("ld h, b")
-      writeLn("ld l, c")
-      writeLn("ld sp, hl")
-    } else if (heapManager.containsKey(name)) {
-      // ld from heap
-      val data = heapManager.get(name)
-      debug("; ld heap var $name")
-      writeLn("ld de, $${data?.address?.toString(16)}")
-      writeLn("ld a, (de)")
-    } else {
-      throw Error("variable $name is neither an argument of the current function nor allocated on the heap")
+        // restore sp
+        writeLn("ld h, b")
+        writeLn("ld l, c")
+        writeLn("ld sp, hl")
+      }
+      heapManager.containsKey(name) -> {
+        // ld from heap
+        val data = heapManager.get(name)
+        debug("; ld heap var $name")
+        writeLn("ld de, $${data?.address?.toString(16)}")
+        writeLn("ld a, (de)")
+      }
+      else -> {
+        throw Error("variable $name is neither an argument of the current function scope nor allocated on the heap")
+      }
     }
 
   }

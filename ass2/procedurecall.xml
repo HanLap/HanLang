@@ -4,34 +4,35 @@
 	<StatementElement>
 		<Block>
 		 <StatementElement>
-			 <While>
-				 <ExpressionElement>
-					 <Binary>
-						 <Operator>eq</Operator>
-						 <Left>
-							 <ExpressionElement>
-								 <IntegerLiteral>
-									 <Value>1</Value>
-								 </IntegerLiteral>
-							 </ExpressionElement>
-						 </Left>
-						 <Right>
-							 <ExpressionElement>
-								 <IntegerLiteral>
-									 <Value>1</Value>
-								 </IntegerLiteral>
-							 </ExpressionElement>
-						 </Right>
-					 </Binary>
-				 </ExpressionElement>
-				 <StatementElement>
-					 <ExpressionElement>
-						 <IntegerLiteral>
-							 <Value>1</Value>
-						 </IntegerLiteral>
-					 </ExpressionElement>
-				 </StatementElement>
-			 </While>
+				<Definition>
+					<Name>tilemaps</Name>
+					<TypeElement>
+						<StructType>
+							<Field>
+								<Name>one</Name>
+								<TypeElement>
+									<Primitive>uint8</Primitive>
+								</TypeElement>
+							</Field>
+						</StructType>
+					</TypeElement>
+					<ExpressionElement>
+						<StructLiteral>
+							<Field>
+								<Name>one</Name>
+								<ExpressionElement>
+									<ArrayLiteral>
+										<ExpressionElement>
+											<IntegerLiteral>
+												<Value>00000000</Value>
+											</IntegerLiteral>
+										</ExpressionElement>
+									</ArrayLiteral>
+								</ExpressionElement>
+							</Field>
+						</StructLiteral>
+					</ExpressionElement>
+				</Definition>
 		 </StatementElement>
 		</Block>
 	</StatementElement>
