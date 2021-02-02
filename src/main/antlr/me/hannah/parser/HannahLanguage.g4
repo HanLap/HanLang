@@ -61,10 +61,11 @@ plusExpr      : lTerm   '+'  rExpr ;
 minusExpr     : lTerm   '-'  rExpr ;
 mulExpr       : lFactor '*'  rTerm ;
 divExpr       : lFactor '/'  rTerm ;
+bitAndExpr    : lFactor '&'  rTerm ;
 numberParen   : '(' numberExpr ')' ;
 
-numberExpr    : numberTerm   | plusExpr | minusExpr | orExpr  ;
-numberTerm    : numberFactor | mulExpr  | divExpr   | andExpr ;
+numberExpr    : numberTerm   | plusExpr | minusExpr ;
+numberTerm    : numberFactor | mulExpr  | divExpr   | bitAndExpr ;
 numberFactor  : intLit | '(' call ')' | varRef  | numberParen | '-' numberFactor ;
 
 
