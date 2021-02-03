@@ -1,0 +1,4 @@
+main :: void
+main do
+  -> getButtonStates -> printByte
+end

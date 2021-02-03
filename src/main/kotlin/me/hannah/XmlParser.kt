@@ -92,15 +92,18 @@ class XmlParser(
   }
 
   private fun handleTileMap(root: Element) {
-    write(".section \"tilemap\"\n")
-    write("tilemap:\n")
-    root
+    val fields = root
       .getChildrenByTagName("Definition")
       .find { it.getChildByTagName("Name").textContent == "_tilemap" }
       ?.getChildByTagName("ExpressionElement")
       ?.getChildByTagName("StructLiteral")
       ?.getChildrenByTagName("Field")
-      ?.forEachIndexed { i, it ->
+
+    if (fields != null) {
+      write(".section \"tilemap\"\n")
+      write("tilemap:\n")
+
+      fields.forEachIndexed { i, it ->
         val name = it.getChildByTagName("Name").textContent
         tileMap[name] = i + 1
         it.getChildByTagName("ExpressionElement")
@@ -111,7 +114,9 @@ class XmlParser(
           .forEach { writeLn(".db %$it") }
         writeLn()
       }
-    write(".ends\n\n")
+      write(".ends\n\n")
+
+    }
 
   }
 
@@ -322,21 +327,58 @@ class XmlParser(
     handleExpressionElement(l as Element, args)
     handleExpressionElement(r as Element, args)
 
-    val stmnt = when (op) {
-      "add" -> "add c"
-      "sub" -> "sub c"
-      "mul" -> "call mul"
-      "div" -> "call div"
-      "and" -> "and c"
-      "or" -> "or c"
-      else -> throw Error("Unknown binary operator '$op'")
+    when (op) {
+      "add" -> writeBinary("add c")
+      "sub" -> writeBinary("sub c")
+      "mul" -> writeBinary("call mul")
+      "div" -> writeBinary("call div")
+      "and" -> writeBinary("and c")
+      "or" -> writeBinary("or c")
+      else -> writeCompare(op)
     }
 
+    writeLn()
+  }
+
+  private fun writeBinary(operator: String) {
     writeLn("pop af")
     writeLn("ld c, a")
     writeLn("pop af")
-    writeLn(stmnt)
-    writeLn()
+    writeLn(operator)
+  }
+
+  private fun writeCompare(operator: String) {
+    val skipLabel = "eval_${labelN++}"
+
+    debug("; compare values")
+    writeLn("pop af")
+    writeLn("ld c, a")
+    writeLn("pop af")
+    writeLn("cp c")
+    writeLn("ld a, 1")
+    debug("; check $operator")
+    when (operator) {
+      "eq" -> {
+        writeLn("jp z, $skipLabel")
+      }
+      "lt" -> {
+        writeLn("jp  c, $skipLabel")
+      }
+      "gt" -> {
+        writeLn("jp  nc, $skipLabel")
+        writeLn("jp  nz, $skipLabel")
+      }
+      "leq" -> {
+        writeLn("jp nc, $skipLabel")
+        writeLn("jp  z, $skipLabel")
+      }
+      "geq" -> {
+        writeLn("jp  nc, $skipLabel")
+        writeLn("jp   z, $skipLabel")
+      }
+    }
+    writeLn("ld a, 0")
+    write("$skipLabel:\n")
   }
 
   private fun handleIntegerLiteral(node: Element) {
@@ -410,7 +452,7 @@ class XmlParser(
     val endLabel = "while_${labelN++}"
 
     write("$startLabel:\n")
-    handleCondition(node.getChildByTagName("ExpressionElement"), args, startLabel, endLabel)
+    handleCondition(node.getChildByTagName("ExpressionElement"), args, endLabel)
     debug("; while body")
     handleStatementElement(node.getChildByTagName("StatementElement"), args, returnLabel)
     writeLn("jp $startLabel")
@@ -423,12 +465,10 @@ class XmlParser(
     val elseN = node.getChildrenByTagName("Else").firstOrNull()
 
     val endLabel = "if_${labelN++}"
-    val thenLabel = "if_${labelN++}"
     val elseLabel = elseN?.let { "if_${labelN++}" }
 
-    handleCondition(condition, args, thenLabel, elseLabel ?: endLabel)
+    handleCondition(condition, args, elseLabel ?: endLabel)
 
-    write("$thenLabel:\n")
     handleStatementElement(thenN.getChildByTagName("StatementElement"), args, returnLabel)
     writeLn("jp $endLabel")
 
@@ -442,116 +482,19 @@ class XmlParser(
   private fun handleCondition(
     node: Element,
     args: Arguments,
-    thenLabel: String,
     elseLabel: String
   ) {
 
-    handleBinaryJump(node.getChildByTagName("Binary"), args, thenLabel, elseLabel)
+    handleExpressionElement(node, args)
 
     writeLn("pop af")
-    writeLn("ld c, a")
-    writeLn("pop af")
+    writeLn("ld c, 1")
 
-    writeLn("cp")
-    writeLn("jp nz, $elseLabel:")
-
-  }
-
-  private fun handleBinaryJump(
-    node: Element,
-    args: Arguments,
-    thenLabel: String,
-    elseLabel: String
-  ) {
-    val op = node.getChildByTagName("Operator").textContent
-    val left = node.getChildByTagName("Left").firstChild
-    val right = node.getChildByTagName("Right").firstChild
-
-    // handle boolean expression and number calculation with default function
-    if (!arrayOf("eq", "lt", "gt", "leq", "geq").contains(op)) {
-      handleNumberBinary(node, args)
-    } else {
-      handleExpressionElement(left as Element, args)
-      handleExpressionElement(right as Element, args)
-
-      val skipLabel = "eval_${labelN++}"
-
-      debug("; compare values")
-      writeLn("pop af")
-      writeLn("ld c, a")
-      writeLn("pop af")
-      writeLn("cp c")
-      writeLn("ld a, 1")
-      debug("; check $op")
-      when (op) {
-        "eq" -> {
-          writeLn("jp z, $skipLabel")
-        }
-        "lt" -> {
-          writeLn("jp  c, $skipLabel")
-        }
-        "gt" -> {
-          writeLn("jp  nc, $skipLabel")
-          writeLn("jp  nz, $skipLabel")
-        }
-        "leq" -> {
-          writeLn("jp nc, $skipLabel")
-          writeLn("jp  z, $skipLabel")
-        }
-        "geq" ->{
-          writeLn("jp  nc, $skipLabel")
-          writeLn("jp   z, $skipLabel")
-        }
-      }
-      writeLn("ld a, 0")
-      write("$skipLabel:")
-      writeLn("push af")
-      writeLn()
-    }
-  }
-
-  private fun handleBooleanElement(node: Element, args: Arguments) {
-    val op = node.getChildByTagName("Operator").textContent
-    val left = node.getChildByTagName("Left").firstChild
-    val right = node.getChildByTagName("Right").firstChild
-
-    handleExpressionElement(left as Element, args)
-    handleExpressionElement(right as Element, args)
-
-    val skipLabel = "eval_${labelN++}"
-
-    debug("; compare values")
-    writeLn("pop af")
-    writeLn("ld c, a")
-    writeLn("pop af")
     writeLn("cp c")
-    writeLn("ld a, 1")
-    debug("; check $op")
-    when (op) {
-      "eq" -> {
-        writeLn("jp z, $skipLabel")
-      }
-      "lt" -> {
-        writeLn("jp  c, $skipLabel")
-      }
-      "gt" -> {
-        writeLn("jp  nc, $skipLabel")
-        writeLn("jp  nz, $skipLabel")
-      }
-      "leq" -> {
-        writeLn("jp nc, $skipLabel")
-        writeLn("jp  z, $skipLabel")
-      }
-      "geq" ->{
-        writeLn("jp  nc, $skipLabel")
-        writeLn("jp   z, $skipLabel")
-      }
-    }
-    writeLn("ld a, 0")
-    write("$skipLabel:")
-    writeLn("push af")
-    writeLn()
+    writeLn("jp nz, $elseLabel")
+
   }
+
 
   private fun NodeList.toElementList() =
     (0 until length)

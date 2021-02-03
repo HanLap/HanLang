@@ -1,20 +1,55 @@
 main :: void
 main do
-  play <- 1
+  delay<- 0
 
-  loop (play = 1) do
-    buttons <- (-> getButtonStates)
+  draw <- 0
 
-    if (buttons = 1)
-      then play <- 0
+  x    <- 10
+  y    <- 10
+
+  loop (1) do
+    if (delay < 200)
+    then delay <- (delay + 1)
+    else do
+      delay <- 0
+      buttons <- (-> getButtonStates)
+
+      if (draw = 1)
+        then black x y -> setTile
+        else white x y -> setTile
+
+                 -> handleMove
+      cursor x y -> setTile
+
+                 -> waitVBlank
+     end
   end
-
-  body 1 1 -> setTile
 end
 
+handleMove :: void
+handleMove do
+  // down
+  if ((buttons && 128) = 0)
+      then y <- (y + 1)
+  // up
+  if ((buttons && 64) = 0)
+      then y <- (y - 1)
+  // left
+  if ((buttons && 32) = 0)
+      then x <- (x - 1)
+  // right
+  if ((buttons && 16) = 0)
+      then x <- (x + 1)
+  // B
+  if ((buttons && 2) = 0)
+      then draw <- 0
+  // A
+  if ((buttons && 1) = 0)
+      then draw <- 1
+end
 
 tilemap <- {
-  body: [
+  black: [
     11111111,
     11111111,
     11111111,
@@ -22,6 +57,28 @@ tilemap <- {
     11111111,
     11111111,
     11111111,
+    11111111,
+  ],
+
+  white: [
+    00000000,
+    00000000,
+    00000000,
+    00000000,
+    00000000,
+    00000000,
+    00000000,
+    00000000,
+  ],
+
+  cursor: [
+    11111111,
+    10000001,
+    10000001,
+    10000001,
+    10000001,
+    10000001,
+    10000001,
     11111111,
   ],
 }

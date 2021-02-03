@@ -28,12 +28,13 @@ lBoolTerm     : boolTerm   ;
 rBoolTerm     : boolTerm   ;
 lBoolFactor   : boolFactor ;
 
-orExpr        : lBoolTerm   '||' rBoolExpr ;
-andExpr       : lBoolFactor '&&' rBoolTerm ;
+eqExpr        : lBoolTerm   ('==' | '=') rBoolExpr ;
+orExpr        : lBoolTerm   ('||' | '|') rBoolExpr ;
+andExpr       : lBoolFactor ('&&' | '&') rBoolTerm ;
 
-boolExpr      : boolTerm   | orExpr  ;
+boolExpr      : boolTerm   | orExpr | eqExpr  ;
 boolTerm      : boolFactor | andExpr ;
-boolFactor    : boolLit | varRef | '(' (call | numberComp | boolFactor) ')' | '!' boolFactor ;
+boolFactor    : boolLit | numberExpr | varRef | '(' (call | numberComp | boolExpr) ')' | '!' boolFactor ;
 
 /*
 * comparison
@@ -41,13 +42,13 @@ boolFactor    : boolLit | varRef | '(' (call | numberComp | boolFactor) ')' | '!
 lCompExpr     : numberExpr ;
 rCompExpr     : numberExpr ;
 
-eqExpr        : lCompExpr '='  rCompExpr ;
+
 ltExpr        : lCompExpr '<'  rCompExpr ;
 gtExpr        : lCompExpr '>'  rCompExpr ;
 leqExpr       : lCompExpr '<=' rCompExpr ;
 geqExpr       : lCompExpr '>=' rCompExpr ;
 
-numberComp    : eqExpr | ltExpr | gtExpr | leqExpr | geqExpr;
+numberComp    : ltExpr | gtExpr | leqExpr | geqExpr;
 
 /*
 * arithmetics
@@ -61,11 +62,10 @@ plusExpr      : lTerm   '+'  rExpr ;
 minusExpr     : lTerm   '-'  rExpr ;
 mulExpr       : lFactor '*'  rTerm ;
 divExpr       : lFactor '/'  rTerm ;
-bitAndExpr    : lFactor '&'  rTerm ;
 numberParen   : '(' numberExpr ')' ;
 
 numberExpr    : numberTerm   | plusExpr | minusExpr ;
-numberTerm    : numberFactor | mulExpr  | divExpr   | bitAndExpr ;
+numberTerm    : numberFactor | mulExpr  | divExpr   ;
 numberFactor  : intLit | '(' call ')' | varRef  | numberParen | '-' numberFactor ;
 
 
@@ -91,7 +91,7 @@ fnName        : ID ;
 block         : stmnts blockReturn? ;
 stmnts        : stmnt* ;
 stmnt         : call | varDec | ifStmnt | whileStmnt | retStmnt ;
-retStmnt           : 'ret' expr;
+retStmnt      : 'ret' expr;
 blockReturn   : expr ;
 
 

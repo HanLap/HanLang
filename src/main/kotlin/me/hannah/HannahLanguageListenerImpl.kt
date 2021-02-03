@@ -148,10 +148,6 @@ class HannahLanguageListenerImpl(
     writer.write("""</Binary></ExpressionElement>""")
   }
 
-  override fun enterBitAndExpr(ctx: BitAndExprContext?) {
-    writer.write("""<ExpressionElement><Binary><Operator>and</Operator>""")
-  }
-
   override fun enterEqExpr(ctx: EqExprContext?) {
     writer.write("""<ExpressionElement><Binary><Operator>eq</Operator>""")
   }
